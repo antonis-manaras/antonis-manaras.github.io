@@ -1,5 +1,9 @@
 a:link, a:visited {
-	color:#3399cc;
+	background:#e0f6ff; 
+	/*border-bottom:#99c4d5 1px solid; */
+	text-decoration:none;
+	/*color:#3399cc;*/
+	color: #727171;
 	text-decoration:none;
 }
 
@@ -8,11 +12,11 @@ body {
 	font-size: 15px;
 	padding:0px;
 	margin: 0px auto;
-	text-align:left;
+	text-align:justify;
 }
 
 li {
-	list-style-type: square;
+	list-style-type: none;
 }
 
 #footer {
