@@ -1,0 +1,31 @@
+body {
+	width:240px;
+}
+
+#lambda {
+	display: block;
+	margin: 30px auto;
+}
+
+#contact {
+	margin-top: 10px;
+	font-size: 12px;
+	text-align: left;
+	list-style-type: none;
+}
+
+#fingerprint {
+	color: #555;
+	margin-top: 5px;
+	line-height: 18px;
+	font-family: "Courier New", Courier, monospace;
+}
+
+.icon {
+	display: inline-block;
+	width: 20px;
+}
+
+.iconx {
+	font-size: 16px;
+}
