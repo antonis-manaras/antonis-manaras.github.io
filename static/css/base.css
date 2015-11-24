@@ -1,5 +1,5 @@
 a:link, a:visited {
-	background:#e0f6ff; 
+	background:#e0f6ff;
 	/*border-bottom:#99c4d5 1px solid; */
 	text-decoration:none;
 	/*color:#3399cc;*/
@@ -8,7 +8,8 @@ a:link, a:visited {
 }
 
 body {
-	font-family: "Courier New",sans-serif;
+	font-family: 'Exo 2',sans-serif;
+	font-weight: 300;
 	font-size: 15px;
 	padding:0px;
 	margin: 0px auto;
