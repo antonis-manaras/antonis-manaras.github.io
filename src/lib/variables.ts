@@ -2,18 +2,18 @@
 
 export const GLOBAL = {
   // Site metadata
-  username: "Zaggonaut",
+  username: "0x42SEC",
   rootUrl: "https://zaggonaut.dev",
-  shortDescription: "Retro-Inspired Theme &<br /> Built for Astro",
-  longDescription: "Zaggonaut is a retro-inspired theme for Astro, built using TypeScript, TailwindCSS, and Astro.",
+  shortDescription: "Cyber Security Musings",
+  longDescription: "",
   
   // Social media links
-  githubProfile: "https://github.com/RATIU5/zaggonaut",
-  twitterProfile: "https://twitter.com/",
-  linkedinProfile: "https://www.linkedin.com/",
+  // githubProfile: "https://github.com/RATIU5/zaggonaut",
+  // twitterProfile: "https://twitter.com/",
+  // linkedinProfile: "https://www.linkedin.com/",
   
   // Common text names used throughout the site
-  articlesName: "Articles",
+  articlesName: "CyberThoughts",
   projectsName: "Projects",
   viewAll: "View All",
   
@@ -32,12 +32,13 @@ export const GLOBAL = {
   projectLongDescription: "All of my projects, including both frontend and full-stack applications.",
 
   // Profile image
-  profileImage: "michael-dam-unsplash.webp",
+  profileImage: "me_round.png",
 
   // Menu items
   menu: {
     home: "/",
-    projects: "/projects",
+    // projects: "/projects",
     blog: "/blog",
+    about: "/about"
   }
 };
