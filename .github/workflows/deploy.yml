@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]  # or 'master' if your branch is named that
+    branches: [main] 
 
 permissions:
   contents: write
@@ -34,4 +34,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-          cname: 0x42sec.com  # Replace with your actual custom domain
+          cname: 0x42sec.io
