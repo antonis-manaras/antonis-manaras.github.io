@@ -15,17 +15,19 @@ export default function Home() {
       <div className="max-w-3xl mx-auto">
         <ul className="divide-y divide-border">
           {posts.map((post) => (
-            <li key={post.slug} className="py-8">
-              <article className="space-y-2">
-                <Link href={`/posts/${post.slug}`} className="block">
-                  <h2 className="text-3xl font-bold font-headline hover:text-accent transition-colors">
-                    {post.title}
-                  </h2>
-                </Link>
-                <div className="text-sm text-muted-foreground">
-                  <span>{format(new Date(post.date), 'MMMM d, yyyy')}</span> by <span>{post.author}</span>
+            <li key={post.slug} className="py-4">
+              <article className="flex justify-between items-baseline w-full gap-4">
+                <div>
+                  <Link href={`/posts/${post.slug}`} className="block">
+                    <h2 className="text-2xl font-bold font-headline hover:text-accent transition-colors">
+                      {post.title}
+                    </h2>
+                  </Link>
                 </div>
-                <p className="text-muted-foreground leading-relaxed pt-2">{post.excerpt}</p>
+                <div className="text-sm text-muted-foreground text-right shrink-0">
+                  <time dateTime={post.date}>{format(new Date(post.date), 'MMMM d, yyyy')}</time>
+                  <span className="block text-xs">by {post.author}</span>
+                </div>
               </article>
             </li>
           ))}
