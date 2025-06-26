@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BookOpen, PlusCircle } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 
 export function AppHeader() {
   return (
@@ -13,9 +13,6 @@ export function AppHeader() {
           <nav className="flex items-center gap-4 text-sm font-medium">
             <Link href="/" className="text-muted-foreground transition-colors hover:text-foreground">
               Home
-            </Link>
-            <Link href="/new-post" className="text-muted-foreground transition-colors hover:text-foreground flex items-center gap-1">
-               <PlusCircle className="h-4 w-4" /> New Post
             </Link>
           </nav>
         </div>
