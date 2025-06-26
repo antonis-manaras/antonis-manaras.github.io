@@ -24,7 +24,7 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased flex flex-col min-h-screen')}>
         <AppHeader />
-        <main className="flex-grow px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {children}
         </main>
         <AppFooter />
