@@ -14,6 +14,9 @@ export function AppHeader() {
             <Link href="/" className="text-muted-foreground transition-colors hover:text-foreground">
               Home
             </Link>
+            <Link href="/about" className="text-muted-foreground transition-colors hover:text-foreground">
+              About
+            </Link>
           </nav>
         </div>
       </div>
