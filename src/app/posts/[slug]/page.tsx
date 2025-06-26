@@ -31,7 +31,7 @@ export default function PostPage({ params }: Props) {
   }
 
   return (
-    <article className="max-w-4xl mx-auto py-8">
+    <article>
       <header className="mb-8 text-center">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 font-headline">{post.title}</h1>
         <div className="flex justify-center items-center gap-6 text-sm text-muted-foreground">
@@ -52,7 +52,7 @@ export default function PostPage({ params }: Props) {
       </header>
 
       <div
-        className="prose prose-lg dark:prose-invert max-w-none mx-auto text-base leading-7 text-foreground/90"
+        className="prose prose-lg dark:prose-invert mx-auto text-base leading-7 text-foreground/90"
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
     </article>

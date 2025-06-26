@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="max-w-4xl mx-auto py-8">
+    <div>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-4xl font-bold font-headline">About Astrotype</CardTitle>
@@ -25,18 +25,20 @@ export default function AboutPage() {
               data-ai-hint="team office"
             />
           </div>
-          <p>
-            Welcome to Astrotype, a space where technology, design, and performance converge. Our mission is to provide a clean, uncluttered, and performant platform for developers, designers, and writers to share their insights with the world.
-          </p>
-          <p>
-            We believe in the power of minimalism and the importance of a fast, accessible web. Astrotype is built on the principles of static site generation, leveraging the power of Next.js to deliver content at lightning speed. Our design philosophy is simple: content is king, and the user experience should be seamless.
-          </p>
-          <p>
-            This platform is more than just a blog; it's a testament to modern web development practices. From AI-powered features to a Git-based content workflow, we're constantly exploring new ways to make content creation more efficient and enjoyable.
-          </p>
-          <p>
-            Thank you for being part of our journey. We're excited to see what you'll create and share with the community.
-          </p>
+          <div className="max-w-prose mx-auto space-y-6">
+            <p>
+              Welcome to Astrotype, a space where technology, design, and performance converge. Our mission is to provide a clean, uncluttered, and performant platform for developers, designers, and writers to share their insights with the world.
+            </p>
+            <p>
+              We believe in the power of minimalism and the importance of a fast, accessible web. Astrotype is built on the principles of static site generation, leveraging the power of Next.js to deliver content at lightning speed. Our design philosophy is simple: content is king, and the user experience should be seamless.
+            </p>
+            <p>
+              This platform is more than just a blog; it's a testament to modern web development practices. From AI-powered features to a Git-based content workflow, we're constantly exploring new ways to make content creation more efficient and enjoyable.
+            </p>
+            <p>
+              Thank you for being part of our journey. We're excited to see what you'll create and share with the community.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -12,7 +12,7 @@ export default function Home() {
         <p className="mt-4 text-lg leading-8 text-muted-foreground">A clean, minimalist blog template for the modern web.</p>
       </div>
 
-      <div className="max-w-3xl mx-auto">
+      <div>
         <ul className="divide-y divide-border">
           {posts.map((post) => (
             <li key={post.slug} className="py-4">
