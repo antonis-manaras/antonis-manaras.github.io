@@ -1,12 +1,12 @@
-# Astrotype Deployment Guide
+# Blog Deployment Guide
 
-This guide will walk you through deploying your Astrotype blog to the web using GitHub Pages.
+This guide will walk you through deploying your blog to the web using GitHub Pages.
 
 ## Part 1: GitHub Repository Setup
 
 1.  **Create a new GitHub Repository:**
     *   Go to [GitHub](https://github.com) and click the `+` icon in the top right, then select "New repository".
-    *   Give your repository a name (e.g., `my-astrotype-blog`).
+    *   Give your repository a name (e.g., `my-awesome-blog`).
     *   Choose whether you want it to be public or private.
     *   Click "Create repository".
 
@@ -126,4 +126,4 @@ We will use GitHub Actions to automatically build and deploy your site to GitHub
             ```
     *   Save your changes. DNS changes can take some time to propagate (from a few minutes to 48 hours).
 
-Once propagation is complete, your Astrotype blog will be accessible at your custom domain. GitHub will also automatically provision an SSL certificate for your site.
+Once propagation is complete, your blog will be accessible at your custom domain. GitHub will also automatically provision an SSL certificate for your site.

@@ -11,14 +11,14 @@ export default function Home() {
       <div className="flex items-center justify-center gap-6">
         <Image
           src="https://placehold.co/100x100.png"
-          alt="Astrotype logo"
+          alt="Blog logo"
           width={100}
           height={100}
           className="rounded-full"
           data-ai-hint="logo abstract"
         />
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl font-headline">Welcome to Astrotype</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl font-headline">Welcome to Your Blog</h1>
           <p className="mt-4 text-lg leading-8 text-muted-foreground">A clean, minimalist blog template for the modern web.</p>
         </div>
       </div>

@@ -8,7 +8,7 @@ export function AppHeader() {
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <BookOpen className="h-6 w-6 text-accent" />
-            <span className="font-bold text-lg font-headline">Astrotype</span>
+            <span className="font-bold text-lg font-headline">Your Blog Name</span>
           </Link>
           <nav className="flex items-center gap-4 text-sm font-medium">
             <Link href="/" className="text-muted-foreground transition-colors hover:text-foreground">

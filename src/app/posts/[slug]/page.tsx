@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props, parent: ResolvingMetad
   }
 
   return {
-    title: `${post.title} | Astrotype`,
+    title: `${post.title} | Your Blog Name`,
     description: post.excerpt,
   };
 }

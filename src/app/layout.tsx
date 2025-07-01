@@ -6,7 +6,7 @@ import { AppFooter } from '@/components/footer';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Astrotype - A Modern Blog Template',
+  title: 'Your Blog Name | A Modern Blog Template',
   description: 'Clean, minimalist blog built with Next.js and AI-powered category suggestions.',
 };
 
