@@ -1,15 +1,26 @@
 import { getPosts } from '@/lib/posts';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 export default function Home() {
   const posts = getPosts();
 
   return (
     <div className="space-y-12">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl font-headline">Welcome to Astrotype</h1>
-        <p className="mt-4 text-lg leading-8 text-muted-foreground">A clean, minimalist blog template for the modern web.</p>
+      <div className="flex items-center justify-center gap-6">
+        <Image
+          src="https://placehold.co/100x100.png"
+          alt="Astrotype logo"
+          width={100}
+          height={100}
+          className="rounded-full"
+          data-ai-hint="logo abstract"
+        />
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl font-headline">Welcome to Astrotype</h1>
+          <p className="mt-4 text-lg leading-8 text-muted-foreground">A clean, minimalist blog template for the modern web.</p>
+        </div>
       </div>
 
       <div>
