@@ -14,8 +14,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Capitalize first letter for display
   const displayTag = tag.charAt(0).toUpperCase() + tag.slice(1);
   return {
-    title: `Posts tagged with "${displayTag}"`,
-    description: `A collection of posts tagged with ${displayTag}.`,
+    title: `Posts containing "${displayTag}"`,
+    description: `A collection of posts containing the tag ${displayTag}.`,
   };
 }
 
@@ -33,7 +33,7 @@ export default function TagPage({ params }: Props) {
   return (
     <div>
       <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl font-headline mb-10">
-        Posts tagged: <span className="text-accent">{displayTag}</span>
+        Posts containing: <span className="text-accent">{displayTag}</span>
       </h1>
 
       {posts.length > 0 ? (
