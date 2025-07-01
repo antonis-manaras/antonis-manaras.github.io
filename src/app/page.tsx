@@ -2,7 +2,6 @@ import { getPosts } from '@/lib/posts';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
@@ -60,20 +59,16 @@ export default function Home() {
 
       <aside className="lg:col-span-1 pt-2">
         <div className="sticky top-20">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tags</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {sortedTags.map(([tag, count]) => (
-                   <Badge key={tag} variant="secondary" className="px-3 py-1 text-sm font-medium">
-                    {tag} ({count})
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <h3 className="text-xl font-bold mb-4 font-headline">Tags</h3>
+          <div className="flex flex-wrap gap-2">
+            {sortedTags.map(([tag, count]) => (
+              <Link href={`/tags/${encodeURIComponent(tag.toLowerCase())}`} key={tag}>
+                 <Badge variant="secondary" className="px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                  {tag} ({count})
+                </Badge>
+              </Link>
+            ))}
+          </div>
         </div>
       </aside>
     </div>
