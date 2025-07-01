@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['"Exo 2"', 'sans-serif'],
-        headline: ['"Exo 2"', 'sans-serif'],
+        body: ['"JetBrains Mono"', 'sans-serif'],
+        headline: ['"JetBrains Mono"', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
