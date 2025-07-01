@@ -15,11 +15,11 @@ export default function AboutPage() {
       <div className="space-y-6 text-lg text-foreground/90 leading-relaxed">
         <div className="flex justify-center">
           <Image
-            src="https://placehold.co/600x400.png"
+            src="https://placehold.co/400x400.png"
             alt="Astrotype team"
-            width={600}
+            width={400}
             height={400}
-            className="rounded-lg shadow-md"
+            className="rounded-full shadow-md"
             data-ai-hint="team office"
           />
         </div>
