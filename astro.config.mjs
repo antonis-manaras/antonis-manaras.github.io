@@ -8,6 +8,6 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   site: "https://0x42sec.io",
+  base: "/",
   output: "static",
-  base: "/"
 });
