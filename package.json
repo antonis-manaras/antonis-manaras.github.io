@@ -7,9 +7,10 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "new-post": "node scripts/new-post.mjs"
+    "new-post": "node scripts/new-post.mjs",
+    "new-project": "node scripts/new-project.mjs"
   },
   "dependencies": {
-    "astro": "^4.16.18"
+    "astro": "^5.18.1"
   }
 }

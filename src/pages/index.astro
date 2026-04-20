@@ -13,6 +13,17 @@ const TERMINAL_POSTS = allPosts
     description: post.data.description,
     body: post.body,
   }));
+
+const allProjects = await getCollection('projects', ({ data }) => !data.draft);
+const TERMINAL_PROJECTS = allProjects
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .map((project, i) => ({
+    num: i + 1,
+    title: project.data.title,
+    status: project.data.status,
+    description: project.data.description,
+    tags: project.data.tags,
+  }));
 ---
 
 <!DOCTYPE html>
@@ -24,7 +35,7 @@ const TERMINAL_POSTS = allPosts
   <meta name="description" content="0x42sec — Security research, red team, RF/SIGINT. Enter the terminal.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=Inconsolata:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <style is:global>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -196,7 +207,7 @@ const TERMINAL_POSTS = allPosts
   </div>
 </div>
 
-<script define:vars={{ TERMINAL_POSTS }}>
+<script is:inline define:vars={{ TERMINAL_POSTS, TERMINAL_PROJECTS }}>
 /* ── DOM ── */
 const outputArea   = document.getElementById('outputArea');
 const inputRow     = document.getElementById('inputRow');
@@ -233,11 +244,9 @@ function buildFS() {
       name: p.slug + '.md',
       type: 'file',
     })),
-    '~/projects': [
-      { perms: 'drwxr-xr-x', size: 4096, date: 'Mar 19 2025', name: 'msasp/',      type: 'dir' },
-      { perms: 'drwxr-xr-x', size: 4096, date: 'Feb 01 2025', name: 'wraithscan/', type: 'dir' },
-      { perms: 'drwxr-xr-x', size: 4096, date: 'Jan 01 2025', name: 'ct-asf/',     type: 'dir' },
-    ],
+    '~/projects': TERMINAL_PROJECTS.length ? TERMINAL_PROJECTS.map(p => ({
+      perms: '-rw-r--r--', size: 512, date: 'Mar 19 2025', name: p.title.toLowerCase().replace(/\s+/g, '-') + '.md', type: 'file',
+    })) : [{ perms: '-rw-r--r--', size: 64, date: 'Mar 19 2025', name: 'wip.md', type: 'file' }],
     '~/about':   [{ perms: '-rw-r--r--', size: 2048, date: 'Mar 19 2025', name: 'profile.md', type: 'file' }],
     '~/contact': [{ perms: '-rw-r--r--', size: 512,  date: 'Mar 19 2025', name: 'contact.md', type: 'file' }],
   };
@@ -353,7 +362,7 @@ function onPagerKey(e) {
   e.preventDefault();
   e.stopImmediatePropagation();
 
-  var lines = pager.lines, scrollPos = pager.scrollPos, slug = pager.slug;
+  var lines = pager.lines, slug = pager.slug;
   var ph = getPageHeight();
   var max = Math.max(0, lines.length - ph);
 
@@ -477,24 +486,75 @@ var ASCII = [
 /* ── COMMANDS ── */
 var ALL_CMDS = ['help','banner','about','projects','blog','read','open','contact','ls','ll','cd','clear','whoami','date','uptime','exit'];
 
-var HELP = [
-  { cmd: 'help',         desc: 'Display this command reference' },
-  { cmd: 'banner',       desc: 'Print the 0x42sec ASCII banner' },
-  { cmd: 'about',        desc: 'About 0x42sec \u2014 background & skills' },
-  { cmd: 'projects',     desc: 'Active & completed projects' },
-  { cmd: 'blog',         desc: 'List all published posts with tags' },
-  { cmd: 'read <n>',     desc: 'Read post N in terminal pager (less-style)' },
-  { cmd: 'open <n>',     desc: 'Open post N in the web browser' },
-  { cmd: 'contact',      desc: 'Contact channels & PGP info' },
-  { cmd: 'ls',           desc: 'List current directory' },
-  { cmd: 'ls -l / ll',   desc: 'Long listing with permissions & sizes' },
-  { cmd: 'cd <dir>',     desc: 'Change directory (about / blog / projects / ~)' },
-  { cmd: 'clear',        desc: 'Clear the screen' },
-  { cmd: 'whoami',       desc: 'Print current operator identity' },
-  { cmd: 'date',         desc: 'Display system date' },
-  { cmd: 'uptime',       desc: 'Show session uptime' },
-  { cmd: 'exit',         desc: 'Launch the full web interface' },
-];
+
+/* ── CONTENT DISPLAY HELPERS ── */
+function showAbout() {
+  setDir('~/about');
+  printLines([
+    { text: 'HANDLE:    0x42sec',                                              cls: 'bright' },
+    { text: 'ROLE:      Security Researcher & Red Team Operator',              cls: '' },
+    { text: 'SITE:      0x42sec.io \u2014 research lab & personal ops',       cls: '' },
+    { text: '', cls: '' },
+    { text: 'EXPERTISE:', cls: 'amber' },
+    { text: '  \u251c\u2500 Offensive adversary simulation & continuous red team',   cls: '' },
+    { text: '  \u251c\u2500 Maritime & SATCOM security (AIS, NMEA, VSAT, Iridium)', cls: '' },
+    { text: '  \u251c\u2500 Passive RF / SIGINT \u2014 SDR, GNU Radio, DroneID',     cls: '' },
+    { text: '  \u251c\u2500 FAIR / Monte Carlo quantitative risk modelling',          cls: '' },
+    { text: '  \u251c\u2500 Threat modelling: STRIDE, PASTA, LINDDUN, Attack Trees', cls: '' },
+    { text: '  \u2514\u2500 CREST CPTIA / ATT&CK TTP mapping',                      cls: '' },
+    { text: '', cls: '' },
+    { text: 'Currently building this terminal.', cls: 'dim' },
+  ]);
+}
+
+function showProjects() {
+  setDir('~/projects');
+  if (!TERMINAL_PROJECTS.length) {
+    printLines([
+      { text: 'PROJECTS', cls: 'amber' },
+      { text: '', cls: '' },
+      { text: 'WIP \u2014 projects to be added soon.', cls: 'dim' },
+    ]);
+  } else {
+    printLine('PROJECTS', 'amber');
+    printBlank();
+    TERMINAL_PROJECTS.forEach(function(p) {
+      printLine('  [' + p.num + '] ' + p.title, 'bright');
+      printLine('      STATUS: [' + p.status + ']', 'dim');
+      printLine('      ' + p.description, '');
+      printLine('      ' + p.tags.join(' \u00b7 '), 'dim');
+      printBlank();
+    });
+  }
+}
+
+function showBlog() {
+  setDir('~/blog');
+  printLine('PUBLISHED POSTS', 'amber');
+  printBlank();
+  TERMINAL_POSTS.forEach(function(p) {
+    var num = ('[' + p.num + ']').padEnd(5);
+    var title = p.title.length > 52 ? p.title.slice(0, 49) + '...' : p.title;
+    printLine('  ' + num + ' ' + p.date + '  ' + title);
+    printLine('              ' + p.tags.join(' \u00b7 '), 'dim');
+    printBlank();
+  });
+  printLine('  "read <n>" to read in terminal  \u00b7  "open <n>" to open in browser', 'amber');
+}
+
+function showContact() {
+  setDir('~/contact');
+  printLines([
+    { text: 'CONTACT CHANNELS', cls: 'amber' },
+    { text: '', cls: '' },
+    { text: 'EMAIL    0x42sec@0x42sec.io',           cls: 'bright' },
+    { text: 'GITHUB   github.com/0x42sec',            cls: '' },
+    { text: 'LINKEDIN linkedin.com/in/0x42sec',       cls: '' },
+    { text: 'PGP      Available on request',          cls: 'dim'   },
+    { text: '', cls: '' },
+    { text: 'Encrypted communications preferred.',    cls: 'dim'   },
+  ]);
+}
 
 function process(raw) {
   var trimmed = raw.trim();
@@ -525,7 +585,7 @@ function process(raw) {
       printLine('  ' + '\u2500'.repeat(W - 2), 'dim');
       [
         { cmd: 'about',     desc: 'About 0x42sec \u2014 background & expertise' },
-        { cmd: 'projects',  desc: 'Active research projects (MSASP, WRAITHSCAN, CT-ASF)' },
+        { cmd: 'projects',  desc: 'Active & completed projects' },
         { cmd: 'blog',      desc: 'List all published posts with tags' },
         { cmd: 'read <n>',  desc: 'Read post N in terminal pager (less-style navigation)' },
         { cmd: 'open <n>',  desc: 'Open post N in the web browser' },
@@ -558,59 +618,16 @@ function process(raw) {
     }
 
     case 'about':
-      setDir('~/about');
-      printLines([
-        { text: 'HANDLE:    0x42sec',                                              cls: 'bright' },
-        { text: 'ROLE:      Security Researcher & Red Team Operator',              cls: '' },
-        { text: 'SITE:      0x42sec.io \u2014 research lab & personal ops',       cls: '' },
-        { text: '', cls: '' },
-        { text: 'EXPERTISE:', cls: 'amber' },
-        { text: '  \u251c\u2500 Offensive adversary simulation & continuous red team',   cls: '' },
-        { text: '  \u251c\u2500 Maritime & SATCOM security (AIS, NMEA, VSAT, Iridium)', cls: '' },
-        { text: '  \u251c\u2500 Passive RF / SIGINT \u2014 SDR, GNU Radio, DroneID',     cls: '' },
-        { text: '  \u251c\u2500 FAIR / Monte Carlo quantitative risk modelling',          cls: '' },
-        { text: '  \u251c\u2500 Threat modelling: STRIDE, PASTA, LINDDUN, Attack Trees', cls: '' },
-        { text: '  \u2514\u2500 CREST CPTIA / ATT&CK TTP mapping',                      cls: '' },
-        { text: '', cls: '' },
-        { text: 'Currently building MSASP, WRAITHSCAN, and this terminal.', cls: 'dim' },
-      ]);
+      showAbout();
       break;
 
     case 'projects':
-      setDir('~/projects');
-      printLines([
-        { text: 'ACTIVE PROJECTS', cls: 'amber' },
-        { text: '', cls: '' },
-        { text: '[1] MSASP \u2014 Maritime & SATCOM Adversary Simulation Platform',         cls: 'bright' },
-        { text: '    Live AIS, NMEA analysis, SDR pipelines (USRP, HackRF, RTL-SDR).',   cls: '' },
-        { text: '    VSAT DVB-S2 capture. Iridium burst interception.',                    cls: '' },
-        { text: '    STATUS: [IN DEVELOPMENT]',                                            cls: 'dim'   },
-        { text: '', cls: '' },
-        { text: '[2] WRAITHSCAN \u2014 Passive FPV Drone SIGINT Device',                  cls: 'bright' },
-        { text: '    Passive RF detection of analog FPV drone transmissions.',             cls: '' },
-        { text: '    ESP32 + RTL-SDR. GNU Radio. DroneID beacon capture.',                cls: '' },
-        { text: '    STATUS: [HARDWARE PROTOTYPE]',                                       cls: 'dim'   },
-        { text: '', cls: '' },
-        { text: '[3] CT-ASF \u2014 Constant Threat Adversary Simulation Framework',       cls: 'bright' },
-        { text: '    7-phase model. FAIR scoring. Monte Carlo. ATT&CK mapping.',         cls: '' },
-        { text: '    STATUS: [LIVE / OPERATIONAL]',                                       cls: 'dim'   },
-      ]);
+      showProjects();
       break;
 
-    case 'blog': {
-      setDir('~/blog');
-      printLine('PUBLISHED POSTS', 'amber');
-      printBlank();
-      TERMINAL_POSTS.forEach(function(p) {
-        var num = ('[' + p.num + ']').padEnd(5);
-        var title = p.title.length > 52 ? p.title.slice(0, 49) + '...' : p.title;
-        printLine('  ' + num + ' ' + p.date + '  ' + title);
-        printLine('              ' + p.tags.join(' \u00b7 '), 'dim');
-        printBlank();
-      });
-      printLine('  "read <n>" to read in terminal  \u00b7  "open <n>" to open in browser', 'amber');
+    case 'blog':
+      showBlog();
       break;
-    }
 
     case 'read': {
       var n = parseInt(args[0]);
@@ -650,17 +667,7 @@ function process(raw) {
     }
 
     case 'contact':
-      setDir('~/contact');
-      printLines([
-        { text: 'CONTACT CHANNELS', cls: 'amber' },
-        { text: '', cls: '' },
-        { text: 'EMAIL    0x42sec@0x42sec.io',           cls: 'bright' },
-        { text: 'GITHUB   github.com/0x42sec',            cls: '' },
-        { text: 'LINKEDIN linkedin.com/in/0x42sec',       cls: '' },
-        { text: 'PGP      Available on request',          cls: 'dim'   },
-        { text: '', cls: '' },
-        { text: 'Encrypted communications preferred.',    cls: 'dim'   },
-      ]);
+      showContact();
       break;
 
     case 'ls': {
@@ -683,15 +690,22 @@ function process(raw) {
 
     case 'cd': {
       var t = args[0] || '~';
-      var full = t === '~' ? '~' : t.startsWith('~/') ? t : currentDir + '/' + t;
-      var norm = full
-        .replace(/^~\/blog.*/,     '~/blog')
-        .replace(/^~\/projects.*/, '~/projects')
-        .replace(/^~\/about.*/,    '~/about')
-        .replace(/^~\/contact.*/, '~/contact')
-        .replace(/^~\/.+/,         '~');
-      if (FS && FS[norm] !== undefined) {
-        setDir(norm);
+      // Resolve to a canonical FS key — short names are always top-level
+      var TOP = { about: '~/about', blog: '~/blog', projects: '~/projects', contact: '~/contact' };
+      var norm2;
+      if (!t || t === '~') {
+        norm2 = '~';
+      } else if (TOP[t]) {
+        norm2 = TOP[t];
+      } else if (t.startsWith('~/')) {
+        var base = t.replace(/^~\//, '').split('/')[0];
+        norm2 = TOP[base] || '~';
+      } else {
+        norm2 = null;
+      }
+      if (norm2 !== null && FS && FS[norm2] !== undefined) {
+        var cdActions = { '~/about': showAbout, '~/blog': showBlog, '~/projects': showProjects, '~/contact': showContact };
+        if (cdActions[norm2]) { cdActions[norm2](); } else { setDir(norm2); }
       } else {
         printLine('cd: ' + t + ': No such file or directory', 'error');
       }
@@ -775,9 +789,27 @@ termInput.addEventListener('keydown', function(e) {
     inputDisplay.textContent = termInput.value;
   } else if (e.key === 'Tab') {
     e.preventDefault();
-    var p = termInput.value.toLowerCase();
-    var m = ALL_CMDS.find(function(c) { return c.startsWith(p) && c !== p; });
-    if (m) { termInput.value = m; inputDisplay.textContent = m; }
+    var raw2 = termInput.value;
+    var parts2 = raw2.trimStart().split(/\s+/);
+    var cmd2 = parts2[0].toLowerCase();
+    var arg2 = parts2[1] || '';
+
+    if (parts2.length <= 1) {
+      // Complete command name
+      var m2 = ALL_CMDS.find(function(c) { return c.startsWith(cmd2) && c !== cmd2; });
+      if (m2) { termInput.value = m2; inputDisplay.textContent = m2; }
+    } else if (cmd2 === 'cd') {
+      // Complete directory name from top-level dirs
+      var DIRS = ['about', 'blog', 'contact', 'projects', '~'];
+      var match2 = DIRS.find(function(d) { return d.startsWith(arg2) && d !== arg2; });
+      if (match2) { termInput.value = 'cd ' + match2; inputDisplay.textContent = termInput.value; }
+    } else if (cmd2 === 'read' || cmd2 === 'open') {
+      // Complete post number
+      var numStr = arg2.toString();
+      var postNums = TERMINAL_POSTS.map(function(p2) { return String(p2.num); });
+      var numMatch = postNums.find(function(n3) { return n3.startsWith(numStr) && n3 !== numStr; });
+      if (numMatch) { termInput.value = cmd2 + ' ' + numMatch; inputDisplay.textContent = termInput.value; }
+    }
   }
 });
 
