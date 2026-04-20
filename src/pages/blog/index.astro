@@ -1,0 +1,42 @@
+---
+import Base from '../../layouts/Base.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import { getCollection } from 'astro:content';
+
+function getReadingTime(content: string): string {
+  const words = content.trim().split(/\s+/).length;
+  const minutes = Math.ceil(words / 200);
+  return minutes === 1 ? '1 min read' : `${minutes} min read`;
+}
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const posts = allPosts.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+);
+---
+
+<Base title="Blog" description="Technical writing on offensive security, RF/SIGINT, maritime systems, and hardware hacking.">
+  <div class="page-wrapper">
+    <header class="page-header">
+      <p class="page-eyebrow">blog</p>
+      <h1 class="page-title">Writing</h1>
+    </header>
+
+    <hr class="section-divider">
+
+    <div style="padding-top: 8px;">
+      <div class="blog-list">
+        {posts.map(post => (
+          <BlogCard
+            slug={post.slug}
+            title={post.data.title}
+            date={post.data.date}
+            tags={post.data.tags}
+            description={post.data.description}
+            readingTime={getReadingTime(post.body)}
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+</Base>

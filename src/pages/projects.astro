@@ -1,0 +1,59 @@
+---
+import Base from '../layouts/Base.astro';
+
+const projects = [
+  {
+    name: 'MSASP',
+    fullName: 'Maritime & SATCOM Adversary Simulation Platform',
+    description:
+      'Live AIS tracking, anomaly detection, and NMEA analysis. SDR-driven offensive TTPs against maritime infrastructure using USRP, HackRF, and RTL-SDR. VSAT DVB-S2 capture and Iridium burst interception pipelines. Seed budget: £400K.',
+    status: 'IN DEVELOPMENT',
+    tags: ['AIS', 'SATCOM', 'SDR', 'Maritime', 'SIGINT'],
+  },
+  {
+    name: 'WRAITHSCAN',
+    fullName: 'Passive FPV Drone SIGINT Device',
+    description:
+      'Passive RF detection and fingerprinting of analog FPV drone transmissions across 5.65–5.95 GHz. ESP32 + RTL-SDR with GNU Radio FFT pipelines. DroneID beacon capture and OFDM frame demodulation. Detection range ~300m line-of-sight.',
+    status: 'HARDWARE PROTOTYPE',
+    tags: ['SDR', 'GNU Radio', 'Hardware', 'DroneID', 'FPV'],
+  },
+  {
+    name: 'CT-ASF',
+    fullName: 'Constant Threat Adversary Simulation Framework',
+    description:
+      'Seven-phase engagement model operating at the pace of the actual threat. FAIR risk scoring with PERT distributions. 100,000-iteration Monte Carlo simulation. ATT&CK TTP mapping with time-decay weighting on threat intelligence inputs.',
+    status: 'LIVE / OPERATIONAL',
+    tags: ['Red Team', 'FAIR', 'Monte Carlo', 'ATT&CK', 'Risk'],
+  },
+];
+---
+
+<Base title="Projects" description="Active security research projects: MSASP, WRAITHSCAN, CT-ASF.">
+  <div class="page-wrapper">
+    <header class="page-header">
+      <p class="page-eyebrow">projects</p>
+      <h1 class="page-title">Active Research</h1>
+    </header>
+
+    <hr class="section-divider">
+
+    <div style="padding-top: 48px;">
+      <div class="project-grid">
+        {projects.map(p => (
+          <div class="project-card">
+            <div class="project-name">{p.name}</div>
+            <div style="font-size: 12px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 14px; text-transform: uppercase;">
+              {p.fullName}
+            </div>
+            <p class="project-desc">{p.description}</p>
+            <span class="project-status">{p.status}</span>
+            <div class="tags">
+              {p.tags.map(tag => <span class="tag">{tag}</span>)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</Base>

@@ -1,0 +1,798 @@
+---
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const TERMINAL_POSTS = allPosts
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .map((post, i) => ({
+    num: i + 1,
+    slug: post.slug,
+    title: post.data.title,
+    date: post.data.date.toISOString().split('T')[0],
+    tags: post.data.tags,
+    description: post.data.description,
+    body: post.body,
+  }));
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>0x42sec // 0x42sec.io</title>
+  <meta name="description" content="0x42sec — Security research, red team, RF/SIGINT. Enter the terminal.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=Inconsolata:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style is:global>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --phosphor: #39FF14;
+      --phosphor-dim: #1a8c08;
+      --phosphor-bright: #88ffaa;
+      --phosphor-amber: #ffb000;
+      --bg: #010a01;
+      --scanline-opacity: 0.12;
+      --glow-spread: 6px;
+      --glow-color: rgba(57,255,20,0.35);
+    }
+
+    html, body { height: 100%; overflow: hidden; background: #000; }
+
+    .crt-wrapper {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse 80% 80% at 50% 50%, #0a1a0a 0%, #000 100%);
+    }
+
+    .crt-screen {
+      position: relative; width: 100%; height: 100%;
+      background: var(--bg); overflow: hidden;
+    }
+    .crt-screen::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 90% 90% at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%);
+      z-index: 4; pointer-events: none;
+    }
+    .crt-screen::after {
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px,
+        rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+      z-index: 5; pointer-events: none;
+      animation: scanline-drift 8s linear infinite;
+    }
+    @keyframes scanline-drift { from { background-position: 0 0 } to { background-position: 0 4px } }
+
+    .phosphor-bloom { position: absolute; inset: 0; z-index: 3; pointer-events: none; box-shadow: inset 0 0 120px 40px rgba(57,255,20,0.04); }
+    .scan-beam { position: absolute; left: 0; right: 0; height: 2px; background: rgba(57,255,20,0.06); z-index: 3; pointer-events: none; animation: scan-beam-anim 6s linear infinite; }
+    @keyframes scan-beam-anim { from { top: -2px; opacity: 0 } 5% { opacity: 1 } 95% { opacity: 0.3 } to { top: 100%; opacity: 0 } }
+
+    @keyframes boot-flicker {
+      0% { opacity: 0 } 10% { opacity: 0.9 } 12% { opacity: 0.1 } 14% { opacity: 0.8 }
+      16% { opacity: 0 } 20% { opacity: 1 } 22% { opacity: 0.4 } 24% { opacity: 1 } 100% { opacity: 1 }
+    }
+    .boot-flicker { animation: boot-flicker 0.5s ease-out forwards; }
+
+    .terminal-inner {
+      position: relative; z-index: 2; width: 100%; height: 100%;
+      padding: 16px 20px 14px;
+      font-family: 'VT323', monospace; font-size: 18px; line-height: 1.45;
+      color: var(--phosphor);
+      text-shadow: 0 0 var(--glow-spread) var(--glow-color), 0 0 2px rgba(57,255,20,0.5);
+      overflow-y: auto; overflow-x: hidden; word-break: break-word;
+      scrollbar-width: thin; scrollbar-color: var(--phosphor-dim) transparent;
+    }
+    .terminal-inner::-webkit-scrollbar { width: 4px; }
+    .terminal-inner::-webkit-scrollbar-thumb { background: var(--phosphor-dim); border-radius: 2px; }
+
+    .output-area { display: block; }
+
+    .output-line { display: block; animation: flicker-in 0.04s ease both; }
+    @keyframes flicker-in { 0% { opacity: 0 } 60% { opacity: 1 } 70% { opacity: 0.7 } 100% { opacity: 1 } }
+    .output-line.dim    { color: var(--phosphor-dim); }
+    .output-line.bright { color: var(--phosphor-bright); }
+    .output-line.amber  { color: var(--phosphor-amber); text-shadow: 0 0 6px rgba(255,176,0,0.5); }
+    .output-line.blank  { min-height: 1.45em; }
+    .output-line.error  { color: #ff4545; text-shadow: 0 0 6px rgba(255,60,60,0.5); }
+    .ascii-art { font-size: 14px; line-height: 1.2; color: var(--phosphor-bright); white-space: pre; }
+
+    /* Pager: disable glow for performance on many lines */
+    .pager-mode .output-line {
+      animation: none;
+      text-shadow: none;
+    }
+    .pager-mode .output-line.amber { text-shadow: 0 0 4px rgba(255,176,0,0.3); }
+
+    /* Input row */
+    .input-row {
+      display: flex; align-items: center;
+      white-space: nowrap; overflow: hidden;
+    }
+    .p-user   { color: var(--phosphor-bright); text-shadow: 0 0 6px rgba(136,255,170,0.5); }
+    .p-sep    { color: var(--phosphor-dim); }
+    .p-dir    { color: #5bc8ff; text-shadow: 0 0 6px rgba(91,200,255,0.4); }
+    .p-dollar { color: var(--phosphor-amber); text-shadow: 0 0 6px rgba(255,176,0,0.5); padding-right: 6px; }
+
+    .input-display-wrap {
+      position: relative; flex: 1; min-width: 0;
+      display: flex; align-items: center; overflow: hidden;
+    }
+    .terminal-input {
+      position: absolute; inset: 0; opacity: 0; cursor: default;
+      background: transparent; border: none; outline: none;
+      font-family: 'VT323', monospace; font-size: 18px;
+      color: transparent; caret-color: transparent; width: 100%;
+    }
+    .input-display {
+      white-space: pre; pointer-events: none;
+      color: var(--phosphor);
+      text-shadow: 0 0 var(--glow-spread) var(--glow-color), 0 0 2px rgba(57,255,20,0.5);
+    }
+    .cursor-block {
+      display: inline-block; flex-shrink: 0;
+      width: 10px; height: 1em;
+      background: var(--phosphor);
+      margin-left: 1px; vertical-align: text-bottom;
+      box-shadow: 0 0 6px var(--glow-color);
+      animation: cursor-blink 1.1s step-end infinite;
+    }
+    @keyframes cursor-blink { 0%, 100% { opacity: 1 } 50% { opacity: 0 } }
+
+    .exit-hint {
+      position: absolute; bottom: 10px; right: 22px;
+      font-family: 'Share Tech Mono', monospace; font-size: 10px;
+      color: rgba(57,255,20,0.3); z-index: 6; letter-spacing: 1px;
+      user-select: none; pointer-events: none;
+    }
+
+    /* Fixed pager status bar — always pinned to bottom of terminal */
+    .pager-status {
+      display: none;
+      position: absolute;
+      bottom: 14px;
+      left: 20px; right: 22px;
+      padding-top: 5px;
+      border-top: 1px solid rgba(57,255,20,0.18);
+      font-family: 'VT323', monospace;
+      font-size: 18px; line-height: 1.45;
+      color: var(--phosphor-amber);
+      text-shadow: 0 0 5px rgba(255,176,0,0.35);
+      background: var(--bg);
+      z-index: 6;
+      user-select: none;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pager-status.active { display: block; }
+
+    @media (max-width: 640px) {
+      .terminal-inner { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="crt-wrapper" id="crtWrapper">
+  <div class="crt-screen boot-flicker">
+    <div class="phosphor-bloom"></div>
+    <div class="scan-beam"></div>
+    <div class="terminal-inner" id="termInner">
+      <div class="output-area" id="outputArea">
+        <div class="input-row" id="inputRow">
+          <span class="p-user">prometheus</span><span class="p-sep">@</span><span class="p-user">0x42sec.io</span><span class="p-sep">:</span><span class="p-dir" id="promptDir">~</span><span class="p-dollar">$&nbsp;</span>
+          <div class="input-display-wrap">
+            <input type="text" id="terminalInput" class="terminal-input"
+              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+              aria-label="Terminal input">
+            <span id="inputDisplay" class="input-display"></span>
+            <span class="cursor-block"></span>
+          </div>
+        </div>
+      </div>
+      <div id="pagerStatus" class="pager-status"></div>
+    </div>
+    <div class="exit-hint">TYPE help FOR COMMANDS &nbsp;|&nbsp; TYPE exit FOR WEBSITE</div>
+  </div>
+</div>
+
+<script define:vars={{ TERMINAL_POSTS }}>
+/* ── DOM ── */
+const outputArea   = document.getElementById('outputArea');
+const inputRow     = document.getElementById('inputRow');
+const termInput    = document.getElementById('terminalInput');
+const inputDisplay = document.getElementById('inputDisplay');
+const promptDir    = document.getElementById('promptDir');
+const crtWrapper   = document.getElementById('crtWrapper');
+const termInner    = document.getElementById('termInner');
+const pagerStatus  = document.getElementById('pagerStatus');
+
+/* ── STATE ── */
+let currentDir = '~';
+const cmdHistory = [];
+let histIdx = -1;
+let pager = null;
+
+function setDir(d) { currentDir = d; promptDir.textContent = d; }
+
+/* ── VIRTUAL FS ── */
+let FS = null;
+function buildFS() {
+  FS = {
+    '~': [
+      { perms: 'drwxr-xr-x', size: 4096, date: 'Mar 19 2025', name: 'about/',    type: 'dir'  },
+      { perms: 'drwxr-xr-x', size: 4096, date: 'Mar 19 2025', name: 'blog/',     type: 'dir'  },
+      { perms: 'drwxr-xr-x', size: 4096, date: 'Mar 19 2025', name: 'contact/',  type: 'dir'  },
+      { perms: 'drwxr-xr-x', size: 4096, date: 'Mar 19 2025', name: 'projects/', type: 'dir'  },
+      { perms: '-rw-r--r--', size: 1138, date: 'Mar 19 2025', name: 'README.md', type: 'file' },
+    ],
+    '~/blog': TERMINAL_POSTS.map(p => ({
+      perms: '-rw-r--r--',
+      size: p.body.length,
+      date: p.date,
+      name: p.slug + '.md',
+      type: 'file',
+    })),
+    '~/projects': [
+      { perms: 'drwxr-xr-x', size: 4096, date: 'Mar 19 2025', name: 'msasp/',      type: 'dir' },
+      { perms: 'drwxr-xr-x', size: 4096, date: 'Feb 01 2025', name: 'wraithscan/', type: 'dir' },
+      { perms: 'drwxr-xr-x', size: 4096, date: 'Jan 01 2025', name: 'ct-asf/',     type: 'dir' },
+    ],
+    '~/about':   [{ perms: '-rw-r--r--', size: 2048, date: 'Mar 19 2025', name: 'profile.md', type: 'file' }],
+    '~/contact': [{ perms: '-rw-r--r--', size: 512,  date: 'Mar 19 2025', name: 'contact.md', type: 'file' }],
+  };
+}
+
+/* ── PRINT ENGINE ── */
+const printQ = [];
+let draining = false;
+
+function addLine(text, cls) {
+  const el = document.createElement('span');
+  el.className = 'output-line' + (cls ? ' ' + cls : '');
+  if (!text && text !== 0) {
+    el.classList.add('blank');
+  } else if (cls === 'ascii') {
+    el.className = 'output-line';
+    const pre = document.createElement('pre');
+    pre.className = 'ascii-art';
+    pre.textContent = text;
+    el.appendChild(pre);
+  } else {
+    el.textContent = text;
+  }
+  outputArea.insertBefore(el, inputRow);
+  // Don't auto-scroll during pager mode — content is rendered all-at-once
+  if (!pager) termInner.scrollTop = termInner.scrollHeight;
+}
+
+function drain() {
+  if (!printQ.length) { draining = false; return; }
+  draining = true;
+  const { text, cls, delay } = printQ.shift();
+  setTimeout(() => { addLine(text, cls); drain(); }, delay);
+}
+
+function printLine(text, cls, delay) {
+  printQ.push({ text: text !== undefined ? text : '', cls: cls || '', delay: delay || 0 });
+  if (!draining) drain();
+}
+
+function printLines(lines, d) {
+  d = d !== undefined ? d : 18;
+  lines.forEach(function(l, i) {
+    var text = '', cls = '';
+    if (typeof l === 'string') { text = l; }
+    else { text = l.text !== undefined ? l.text : ''; cls = l.cls || ''; }
+    printLine(text, cls, i * d);
+  });
+}
+
+function printEcho(cmd) { printLine('prometheus@0x42sec.io:' + currentDir + '$ ' + cmd, 'dim'); }
+function printBlank()   { printLine(''); }
+
+function clearOutput() {
+  while (outputArea.firstChild !== inputRow) {
+    outputArea.removeChild(outputArea.firstChild);
+  }
+}
+
+/* ── PAGER ── */
+function getPageHeight() {
+  var lh = 18 * 1.45; // ~26.1px per line
+  // Reserve: top padding (16px) + status bar (~lh + 5px padding-top + 1px border + 14px bottom padding)
+  var statusBarPx = lh + 20;
+  var usable = termInner.clientHeight - 16 - statusBarPx;
+  var headerLines = 2; // title line + separator line
+  return Math.max(5, Math.floor(usable / lh) - headerLines);
+}
+
+function openPager(lines, title, slug) {
+  pager = { lines: lines, title: title, slug: slug, scrollPos: 0 };
+  inputRow.style.display = 'none';
+  termInner.classList.add('pager-mode');
+  termInner.style.overflowY = 'hidden'; // prevent any scrolling — pager controls the view
+  pagerStatus.classList.add('active');
+  clearOutput();
+  renderPager();
+  document.addEventListener('keydown', onPagerKey, true);
+}
+
+function renderPager() {
+  clearOutput();
+  var lines = pager.lines, scrollPos = pager.scrollPos, title = pager.title;
+  var ph = getPageHeight();
+  var slice = lines.slice(scrollPos, scrollPos + ph);
+  var atEnd = scrollPos + ph >= lines.length;
+  var pct = Math.min(100, Math.round(((scrollPos + ph) / lines.length) * 100));
+
+  // Update the fixed status bar element — always visible, never scrolls
+  if (atEnd) {
+    pagerStatus.textContent = '(END) \u2500 q:quit \u00b7 g:top \u00b7 b:prev page \u00b7 w:open in browser';
+  } else {
+    pagerStatus.textContent = '\u2500\u2500 ' + pct + '% \u2500\u2500 Space:pgdn \u00b7 b:pgup \u00b7 j/\u2193:line \u00b7 k/\u2191:line \u00b7 g:top \u00b7 G:end \u00b7 q:quit \u00b7 w:web';
+  }
+
+  // Render header
+  addLine('\u2500\u2500 ' + title.slice(0, 55) + ' ', 'amber');
+  addLine('\u2500'.repeat(64), 'dim');
+
+  // Render content lines for this page
+  for (var i = 0; i < slice.length; i++) {
+    addLine(slice[i].text, slice[i].cls);
+  }
+
+  // Fill remaining space with ~ (like less/vim)
+  var fill = ph - slice.length;
+  for (var j = 0; j < fill; j++) addLine('~', 'dim');
+  // No scrollTop reset needed — overflow:hidden prevents any scrolling
+}
+
+function onPagerKey(e) {
+  if (!pager) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+
+  var lines = pager.lines, scrollPos = pager.scrollPos, slug = pager.slug;
+  var ph = getPageHeight();
+  var max = Math.max(0, lines.length - ph);
+
+  function move(delta) {
+    pager.scrollPos = Math.max(0, Math.min(pager.scrollPos + delta, max));
+    renderPager();
+  }
+
+  switch (e.key) {
+    case 'q': case 'Q': closePager(); break;
+    case 'w': case 'W': window.location.href = '/blog/' + slug; break;
+    case ' ': case 'f': case 'F': case 'PageDown': move(ph); break;
+    case 'b': case 'B': case 'PageUp': move(-ph); break;
+    case 'j': case 'ArrowDown': move(1); break;
+    case 'k': case 'ArrowUp': move(-1); break;
+    case 'd': move(Math.floor(ph / 2)); break;
+    case 'u': move(-Math.floor(ph / 2)); break;
+    case 'g': case 'Home': pager.scrollPos = 0; renderPager(); break;
+    case 'G': case 'End': pager.scrollPos = max; renderPager(); break;
+  }
+}
+
+function closePager() {
+  document.removeEventListener('keydown', onPagerKey, true);
+  pager = null;
+  termInner.classList.remove('pager-mode');
+  termInner.style.overflowY = ''; // restore scrolling
+  pagerStatus.classList.remove('active');
+  pagerStatus.textContent = '';
+  clearOutput();
+  inputRow.style.display = '';
+  printLine('\u2500'.repeat(64), 'dim');
+  printLine('"blog" to list posts \u00b7 "read <n>" for another \u00b7 "open <n>" for browser view', 'dim');
+  printBlank();
+  termInput.focus();
+}
+
+/* ── MARKDOWN → TERMINAL LINES ── */
+function stripInline(t) {
+  return t
+    .replace(/\*\*\*(.+?)\*\*\*/g, '$1').replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1')
+    .replace(/___(.+?)___/g, '$1').replace(/__(.+?)__/g, '$1').replace(/_(.+?)_/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1').replace(/`([^`]+)`/g, '$1')
+    .replace(/\[(.+?)\]\(.+?\)/g, '$1').replace(/!\[.*?\]\(.*?\)/g, '[image]')
+    .replace(/<[^>]+>/g, '');
+}
+
+function mdToLines(md) {
+  var out = [];
+  var inCode = false;
+  var codeBuf = [];
+  var rawLines = md.split('\n');
+
+  for (var i = 0; i < rawLines.length; i++) {
+    var raw = rawLines[i];
+
+    if (raw.startsWith('```')) {
+      if (!inCode) {
+        inCode = true; codeBuf = [];
+      } else {
+        inCode = false;
+        out.push({ text: '  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500', cls: 'dim' });
+        for (var k = 0; k < codeBuf.length; k++) out.push({ text: '  \u2502 ' + codeBuf[k], cls: 'dim' });
+        out.push({ text: '  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500', cls: 'dim' });
+      }
+      continue;
+    }
+    if (inCode) { codeBuf.push(raw); continue; }
+
+    var hm = raw.match(/^(#{1,6})\s+(.+)/);
+    if (hm) {
+      var lvl = hm[1].length;
+      var txt = stripInline(hm[2]).toUpperCase();
+      out.push({ text: '', cls: '' });
+      out.push({ text: txt, cls: lvl <= 2 ? 'bright' : 'amber' });
+      out.push({ text: (lvl <= 2 ? '\u2550' : '\u2500').repeat(Math.min(txt.length + 2, 64)), cls: 'dim' });
+      continue;
+    }
+
+    if (/^[-*_]{3,}$/.test(raw.trim())) { out.push({ text: '\u2500'.repeat(64), cls: 'dim' }); continue; }
+    if (raw.startsWith('> ')) { out.push({ text: '  \u2502 ' + stripInline(raw.slice(2)), cls: 'dim' }); continue; }
+
+    var ul = raw.match(/^(\s*)[-*+] (.+)/);
+    if (ul) { out.push({ text: ul[1] + '  \u00b7 ' + stripInline(ul[2]), cls: '' }); continue; }
+
+    var ol = raw.match(/^(\s*)(\d+)\. (.+)/);
+    if (ol) { out.push({ text: ol[1] + '  ' + ol[2] + '. ' + stripInline(ol[3]), cls: '' }); continue; }
+
+    out.push({ text: stripInline(raw), cls: '' });
+  }
+  return out;
+}
+
+/* ── LS ── */
+function lsLong(dir) {
+  if (!FS) { printLine('filesystem not ready', 'error'); return; }
+  var entries = FS[dir];
+  if (!entries) { printLine("ls: cannot access '" + dir + "': No such file or directory", 'error'); return; }
+  var total = entries.reduce(function(s, e) { return s + Math.ceil(e.size / 512); }, 0);
+  printLine('total ' + total, 'dim');
+  entries.forEach(function(e) {
+    var sz = String(e.size).padStart(6);
+    printLine(e.perms + '  0x42sec  staff  ' + sz + '  ' + e.date + '  ' + e.name, e.type === 'dir' ? 'bright' : '');
+  });
+}
+
+/* ── ASCII BANNER ── */
+var ASCII = [
+  '\u2500'.repeat(77),
+  '',
+  '  \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2557  \u2588\u2588\u2557\u2588\u2588\u2557  \u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2557                  ',
+  ' \u2588\u2588\u2554\u2550\u2550\u2550\u2588\u2588\u2557\u255a\u2588\u2588\u2557\u2588\u2588\u2554\u255d\u2588\u2588\u2551  \u2588\u2588\u2551\u255a\u2550\u2550\u2550\u2550\u2588\u2588\u2557\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255d\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255d\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255d                  ',
+  ' \u2588\u2588\u2551   \u2588\u2588\u2551 \u255a\u2588\u2588\u2588\u2554\u255d \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2551  \u2588\u2588\u2588\u2554\u255d \u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551                       ',
+  ' \u2588\u2588\u2551   \u2588\u2588\u2551 \u2588\u2588\u2554\u2588\u2588\u2557 \u255a\u2550\u2550\u2550\u2550\u2588\u2588\u2551 \u2588\u2588\u2554\u2550\u2550\u255d \u255a\u2550\u2550\u2550\u2550\u2588\u2588\u2557\u2588\u2588\u2554\u2550\u2550\u255d  \u2588\u2588\u2551                       ',
+  ' \u255a\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255d\u2588\u2588\u2554\u255d \u2588\u2588\u2557     \u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u255a\u2588\u2588\u2588\u2588\u2588\u2588\u2557                  ',
+  '  \u255a\u2550\u2550\u2550\u2550\u2550\u255d \u255a\u2550\u255d  \u255a\u2550\u255d     \u255a\u2550\u255d\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u255d\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u255d\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u255d \u255a\u2550\u2550\u2550\u2550\u2550\u255d                  ',
+  '',
+  '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500[ 0x42sec ]\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500[ 0x42sec.io ]\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500'
+].join('\n');
+
+/* ── COMMANDS ── */
+var ALL_CMDS = ['help','banner','about','projects','blog','read','open','contact','ls','ll','cd','clear','whoami','date','uptime','exit'];
+
+var HELP = [
+  { cmd: 'help',         desc: 'Display this command reference' },
+  { cmd: 'banner',       desc: 'Print the 0x42sec ASCII banner' },
+  { cmd: 'about',        desc: 'About 0x42sec \u2014 background & skills' },
+  { cmd: 'projects',     desc: 'Active & completed projects' },
+  { cmd: 'blog',         desc: 'List all published posts with tags' },
+  { cmd: 'read <n>',     desc: 'Read post N in terminal pager (less-style)' },
+  { cmd: 'open <n>',     desc: 'Open post N in the web browser' },
+  { cmd: 'contact',      desc: 'Contact channels & PGP info' },
+  { cmd: 'ls',           desc: 'List current directory' },
+  { cmd: 'ls -l / ll',   desc: 'Long listing with permissions & sizes' },
+  { cmd: 'cd <dir>',     desc: 'Change directory (about / blog / projects / ~)' },
+  { cmd: 'clear',        desc: 'Clear the screen' },
+  { cmd: 'whoami',       desc: 'Print current operator identity' },
+  { cmd: 'date',         desc: 'Display system date' },
+  { cmd: 'uptime',       desc: 'Show session uptime' },
+  { cmd: 'exit',         desc: 'Launch the full web interface' },
+];
+
+function process(raw) {
+  var trimmed = raw.trim();
+  if (!trimmed) return;
+  cmdHistory.unshift(trimmed);
+  histIdx = -1;
+
+  var parts = trimmed.split(/\s+/);
+  var cmd = parts[0].toLowerCase();
+  var args = parts.slice(1);
+
+  printEcho(trimmed);
+  printBlank();
+
+  switch (cmd) {
+    case 'banner':
+      printLine(ASCII, 'ascii');
+      break;
+
+    case 'help': {
+      var W = 64;
+      printLine('COMMAND REFERENCE', 'amber');
+      printLine('\u2550'.repeat(W), 'dim');
+      printBlank();
+
+      // Site Navigation section
+      printLine('  SITE NAVIGATION', 'bright');
+      printLine('  ' + '\u2500'.repeat(W - 2), 'dim');
+      [
+        { cmd: 'about',     desc: 'About 0x42sec \u2014 background & expertise' },
+        { cmd: 'projects',  desc: 'Active research projects (MSASP, WRAITHSCAN, CT-ASF)' },
+        { cmd: 'blog',      desc: 'List all published posts with tags' },
+        { cmd: 'read <n>',  desc: 'Read post N in terminal pager (less-style navigation)' },
+        { cmd: 'open <n>',  desc: 'Open post N in the web browser' },
+        { cmd: 'contact',   desc: 'Contact channels & PGP info' },
+        { cmd: 'exit',      desc: 'Launch 0x42sec.io web interface' },
+      ].forEach(function(h) {
+        printLine('  ' + h.cmd.padEnd(14) + '\u00b7  ' + h.desc);
+      });
+      printBlank();
+
+      // Terminal section
+      printLine('  TERMINAL', 'bright');
+      printLine('  ' + '\u2500'.repeat(W - 2), 'dim');
+      [
+        { cmd: 'help',      desc: 'Show this command reference' },
+        { cmd: 'banner',    desc: 'Print the 0x42sec ASCII banner' },
+        { cmd: 'ls',        desc: 'List current directory' },
+        { cmd: 'ls -l',     desc: 'Long listing with permissions and file sizes' },
+        { cmd: 'll',        desc: 'Alias for ls -l' },
+        { cmd: 'cd <dir>',  desc: 'Navigate to directory (about / blog / projects / ~)' },
+        { cmd: 'whoami',    desc: 'Print current operator identity' },
+        { cmd: 'date',      desc: 'Display system date and time' },
+        { cmd: 'uptime',    desc: 'Show session uptime' },
+        { cmd: 'clear',     desc: 'Clear the terminal screen' },
+      ].forEach(function(h) {
+        printLine('  ' + h.cmd.padEnd(14) + '\u00b7  ' + h.desc);
+      });
+      printLine('\u2550'.repeat(W), 'dim');
+      break;
+    }
+
+    case 'about':
+      setDir('~/about');
+      printLines([
+        { text: 'HANDLE:    0x42sec',                                              cls: 'bright' },
+        { text: 'ROLE:      Security Researcher & Red Team Operator',              cls: '' },
+        { text: 'SITE:      0x42sec.io \u2014 research lab & personal ops',       cls: '' },
+        { text: '', cls: '' },
+        { text: 'EXPERTISE:', cls: 'amber' },
+        { text: '  \u251c\u2500 Offensive adversary simulation & continuous red team',   cls: '' },
+        { text: '  \u251c\u2500 Maritime & SATCOM security (AIS, NMEA, VSAT, Iridium)', cls: '' },
+        { text: '  \u251c\u2500 Passive RF / SIGINT \u2014 SDR, GNU Radio, DroneID',     cls: '' },
+        { text: '  \u251c\u2500 FAIR / Monte Carlo quantitative risk modelling',          cls: '' },
+        { text: '  \u251c\u2500 Threat modelling: STRIDE, PASTA, LINDDUN, Attack Trees', cls: '' },
+        { text: '  \u2514\u2500 CREST CPTIA / ATT&CK TTP mapping',                      cls: '' },
+        { text: '', cls: '' },
+        { text: 'Currently building MSASP, WRAITHSCAN, and this terminal.', cls: 'dim' },
+      ]);
+      break;
+
+    case 'projects':
+      setDir('~/projects');
+      printLines([
+        { text: 'ACTIVE PROJECTS', cls: 'amber' },
+        { text: '', cls: '' },
+        { text: '[1] MSASP \u2014 Maritime & SATCOM Adversary Simulation Platform',         cls: 'bright' },
+        { text: '    Live AIS, NMEA analysis, SDR pipelines (USRP, HackRF, RTL-SDR).',   cls: '' },
+        { text: '    VSAT DVB-S2 capture. Iridium burst interception.',                    cls: '' },
+        { text: '    STATUS: [IN DEVELOPMENT]',                                            cls: 'dim'   },
+        { text: '', cls: '' },
+        { text: '[2] WRAITHSCAN \u2014 Passive FPV Drone SIGINT Device',                  cls: 'bright' },
+        { text: '    Passive RF detection of analog FPV drone transmissions.',             cls: '' },
+        { text: '    ESP32 + RTL-SDR. GNU Radio. DroneID beacon capture.',                cls: '' },
+        { text: '    STATUS: [HARDWARE PROTOTYPE]',                                       cls: 'dim'   },
+        { text: '', cls: '' },
+        { text: '[3] CT-ASF \u2014 Constant Threat Adversary Simulation Framework',       cls: 'bright' },
+        { text: '    7-phase model. FAIR scoring. Monte Carlo. ATT&CK mapping.',         cls: '' },
+        { text: '    STATUS: [LIVE / OPERATIONAL]',                                       cls: 'dim'   },
+      ]);
+      break;
+
+    case 'blog': {
+      setDir('~/blog');
+      printLine('PUBLISHED POSTS', 'amber');
+      printBlank();
+      TERMINAL_POSTS.forEach(function(p) {
+        var num = ('[' + p.num + ']').padEnd(5);
+        var title = p.title.length > 52 ? p.title.slice(0, 49) + '...' : p.title;
+        printLine('  ' + num + ' ' + p.date + '  ' + title);
+        printLine('              ' + p.tags.join(' \u00b7 '), 'dim');
+        printBlank();
+      });
+      printLine('  "read <n>" to read in terminal  \u00b7  "open <n>" to open in browser', 'amber');
+      break;
+    }
+
+    case 'read': {
+      var n = parseInt(args[0]);
+      if (!args[0] || isNaN(n) || n < 1 || n > TERMINAL_POSTS.length) {
+        printLine('read: expected a post number 1\u2013' + TERMINAL_POSTS.length, 'error');
+        printLine('Type "blog" to see the list.', 'dim');
+        break;
+      }
+      var post = TERMINAL_POSTS[n - 1];
+      setDir('~/blog');
+      var pagerTitle = '[' + post.num + '/' + TERMINAL_POSTS.length + '] ' + post.date;
+      var lines = [
+        { text: post.title.toUpperCase(), cls: 'bright' },
+        { text: '\u2550'.repeat(Math.min(post.title.length, 64)), cls: 'dim' },
+        { text: 'Published: ' + post.date + '  \u00b7  Tags: ' + post.tags.join(' \u00b7 '), cls: 'dim' },
+        { text: '', cls: '' },
+      ].concat(mdToLines(post.body)).concat([
+        { text: '', cls: '' },
+        { text: '\u2500'.repeat(64), cls: 'dim' },
+        { text: 'w: open in browser  \u00b7  q: close pager', cls: 'dim' },
+      ]);
+      // Delay to let echo render first
+      setTimeout(function() { openPager(lines, pagerTitle, post.slug); }, 120);
+      return;
+    }
+
+    case 'open': {
+      var n2 = parseInt(args[0]);
+      if (!args[0] || isNaN(n2) || n2 < 1 || n2 > TERMINAL_POSTS.length) {
+        printLine('open: expected a post number 1\u2013' + TERMINAL_POSTS.length, 'error');
+        break;
+      }
+      var post2 = TERMINAL_POSTS[n2 - 1];
+      printLine('Opening /blog/' + post2.slug + '...', 'amber');
+      setTimeout(function() { window.location.href = '/blog/' + post2.slug; }, 500);
+      return;
+    }
+
+    case 'contact':
+      setDir('~/contact');
+      printLines([
+        { text: 'CONTACT CHANNELS', cls: 'amber' },
+        { text: '', cls: '' },
+        { text: 'EMAIL    0x42sec@0x42sec.io',           cls: 'bright' },
+        { text: 'GITHUB   github.com/0x42sec',            cls: '' },
+        { text: 'LINKEDIN linkedin.com/in/0x42sec',       cls: '' },
+        { text: 'PGP      Available on request',          cls: 'dim'   },
+        { text: '', cls: '' },
+        { text: 'Encrypted communications preferred.',    cls: 'dim'   },
+      ]);
+      break;
+
+    case 'ls': {
+      var flag = args.find(function(a) { return a.startsWith('-'); });
+      var dir = FS && FS[currentDir] ? currentDir : '~';
+      if (flag === '-l' || flag === '-la' || flag === '-lh' || flag === '-al' || flag === '-a') {
+        lsLong(dir);
+      } else {
+        if (!FS) { printLine('filesystem not ready', 'error'); break; }
+        var entries = FS[dir];
+        if (!entries) { printLine('ls: ' + dir + ': No such directory', 'error'); break; }
+        entries.forEach(function(e) { printLine(e.name, e.type === 'dir' ? 'bright' : ''); });
+      }
+      break;
+    }
+
+    case 'll':
+      lsLong(FS && FS[currentDir] ? currentDir : '~');
+      break;
+
+    case 'cd': {
+      var t = args[0] || '~';
+      var full = t === '~' ? '~' : t.startsWith('~/') ? t : currentDir + '/' + t;
+      var norm = full
+        .replace(/^~\/blog.*/,     '~/blog')
+        .replace(/^~\/projects.*/, '~/projects')
+        .replace(/^~\/about.*/,    '~/about')
+        .replace(/^~\/contact.*/, '~/contact')
+        .replace(/^~\/.+/,         '~');
+      if (FS && FS[norm] !== undefined) {
+        setDir(norm);
+      } else {
+        printLine('cd: ' + t + ': No such file or directory', 'error');
+      }
+      break;
+    }
+
+    case 'whoami':
+      printLine('prometheus', 'bright');
+      break;
+
+    case 'date':
+      printLine(new Date().toString());
+      break;
+
+    case 'uptime': {
+      var s = Math.floor(performance.now() / 1000);
+      printLine('up ' + Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm ' + (s % 60) + 's');
+      break;
+    }
+
+    case 'clear':
+      clearOutput();
+      return;
+
+    case 'exit':
+      printLine('Launching 0x42sec.io...', 'amber');
+      setTimeout(function() {
+        crtWrapper.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+        crtWrapper.style.opacity = '0';
+        crtWrapper.style.transform = 'scale(1.08)';
+        setTimeout(function() { window.location.href = '/blog'; }, 750);
+      }, 500);
+      return;
+
+    default:
+      printLine(cmd + ': command not found', 'error');
+      printLine('Type "help" for available commands.', 'dim');
+  }
+
+  printBlank();
+}
+
+/* ── BOOT ── */
+function boot() {
+  printLines([
+    { text: 'BIOS v2.14.7 \u2014 Initialising POST...', cls: 'dim' },
+    { text: 'RAM CHECK: 640K OK',                        cls: 'dim' },
+    { text: 'LOADING KERNEL...',                         cls: 'dim' },
+    { text: '', cls: '' },
+    { text: ASCII, cls: 'ascii' },
+    { text: '', cls: '' },
+    { text: '[ security research // red team // rf+sigint // personal ops ]', cls: 'bright' },
+    { text: 'System ready. Operator authenticated.',     cls: 'dim'   },
+    { text: '', cls: '' },
+    { text: 'Type "help" for available commands.',       cls: 'amber' },
+    { text: '', cls: '' },
+  ], 55);
+}
+
+/* ── INPUT MIRROR ── */
+termInput.addEventListener('input', function() { inputDisplay.textContent = termInput.value; });
+
+/* ── KEYBOARD ── */
+termInput.addEventListener('keydown', function(e) {
+  if (pager) return;
+  if (e.key === 'Enter') {
+    var val = termInput.value;
+    termInput.value = ''; inputDisplay.textContent = '';
+    process(val);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (histIdx < cmdHistory.length - 1) {
+      histIdx++;
+      termInput.value = cmdHistory[histIdx];
+      inputDisplay.textContent = termInput.value;
+    }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (histIdx > 0) { histIdx--; termInput.value = cmdHistory[histIdx]; }
+    else { histIdx = -1; termInput.value = ''; }
+    inputDisplay.textContent = termInput.value;
+  } else if (e.key === 'Tab') {
+    e.preventDefault();
+    var p = termInput.value.toLowerCase();
+    var m = ALL_CMDS.find(function(c) { return c.startsWith(p) && c !== p; });
+    if (m) { termInput.value = m; inputDisplay.textContent = m; }
+  }
+});
+
+/* ── GLOBAL FOCUS ── */
+document.addEventListener('keydown', function() {
+  if (!pager) termInput.focus();
+});
+
+/* ── INIT ── */
+window.addEventListener('load', function() {
+  buildFS();
+  boot();
+  setTimeout(function() { termInput.focus(); }, 2000);
+});
+</script>
+
+</body>
+</html>
