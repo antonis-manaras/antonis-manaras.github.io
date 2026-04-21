@@ -44,11 +44,11 @@ a:hover { opacity: 0.7; }
 }
 
 .nav-logo {
-  font-family: 'VT323', monospace;
-  font-size: 24px;
+  font-family: 'Sixtyfour', monospace;
+  font-variation-settings: 'SCAN' -10;
+  font-size: 20px;
   color: var(--phosphor);
   text-shadow: 0 0 10px rgba(57,255,20,0.35);
-  letter-spacing: 2px;
   text-decoration: none;
 }
 .nav-logo:hover { opacity: 1; }
@@ -110,10 +110,10 @@ a:hover { opacity: 0.7; }
 .page-eyebrow::before { content: '> '; }
 
 .page-title {
-  font-family: 'VT323', monospace;
+  font-family: 'Sixtyfour', monospace;
+  font-variation-settings: 'SCAN' -10;
   font-size: 48px;
   color: var(--text-bright);
-  letter-spacing: 2px;
   line-height: 1;
 }
 
@@ -222,12 +222,12 @@ a:hover { opacity: 0.7; }
 .back-link:hover { color: var(--phosphor); opacity: 1; }
 
 .post-title {
+  font-family: 'Sixtyfour', monospace;
+  font-variation-settings: 'SCAN' -10;
   font-size: 34px;
-  font-weight: 500;
   color: var(--text-bright);
   line-height: 1.2;
   margin-bottom: 24px;
-  letter-spacing: -0.3px;
 }
 
 .post-meta {
@@ -481,7 +481,7 @@ a:hover { opacity: 0.7; }
   .nav-links li:not(:last-child) { display: none; }
   .page-wrapper { padding: 0 20px; }
   .page-header { padding: 48px 0 32px; }
-  .page-title { font-size: 36px; }
-  .post-title { font-size: 26px; }
+  .page-title { font-size: 32px; }
+  .post-title { font-size: 24px; }
   .site-footer { padding: 24px 20px; }
 }
