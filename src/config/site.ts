@@ -6,7 +6,7 @@ export const SITE = {
   handle:  '0x42sec',
   domain:  '0x42sec.io',
   // Shown in the terminal boot sequence and browser meta descriptions
-  tagline: 'Cyber Transformation // AppSec // Offensive Adversary Simulation // Threat Intelligence // personal ops',
+  tagline: 'Cyber Transformation // AppSec // Offensive Adversary Simulation // Threat Intelligence // Personal Ops',
 };
 
 export const ABOUT = {
