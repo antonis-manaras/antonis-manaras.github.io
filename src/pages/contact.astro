@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { CONTACT } from '../config/site.ts';
 ---
 
 <Base title="Contact" description="Get in touch with 0x42sec — email, GitHub, LinkedIn, PGP.">
@@ -13,18 +14,20 @@ import Base from '../layouts/Base.astro';
 
     <div style="padding-top: 48px;">
       <div class="contact-grid">
-        <div class="contact-card">
-          <div class="contact-label">Email</div>
-          <div class="contact-value">
-            hello [at] 0x42sec.io
+        {CONTACT.channels.map(ch => (
+          <div class="contact-card">
+            <div class="contact-label">{ch.label}</div>
+            <div class="contact-value">
+              {ch.href
+                ? <a href={ch.href} target="_blank" rel="noopener">{ch.value}</a>
+                : ch.value
+              }
+            </div>
           </div>
-        </div>
-        <!-- <div class="contact-card">
-          <div class="contact-label">LinkedIn</div>
-          <div class="contact-value">
-            <a href="https://linkedin.com/in/0x42sec" target="_blank" rel="noopener">linkedin.com/in/0x42sec</a>
-          </div>
-        </div> -->
+        ))}
+        <!-- {CONTACT.note && (
+          <div class="contact-note">{CONTACT.note}</div>
+        )} -->
       </div>
     </div>
   </div>

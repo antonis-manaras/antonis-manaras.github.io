@@ -1,37 +1,25 @@
 ---
 import Base from '../layouts/Base.astro';
+import { ABOUT } from '../config/site.ts';
 ---
 
-<Base title="About" description="About 0x42sec — Cyber Transformation, Threat Intelligence & Offensive Adversary Simulation.">
+<Base title="About" description={ABOUT.lead}>
   <div class="page-wrapper">
     <header class="page-header">
       <p class="page-eyebrow">about</p>
-      <h1 class="page-title">0x42sec</h1>
+      <h1 class="page-title">{ABOUT.handle}</h1>
     </header>
 
     <hr class="section-divider">
 
     <div class="about-body" style="padding-top: 48px;">
-      <p class="about-lead">
-        Senior Cyber Security Leader with 10+ years across Security Engineering, AppSec, Cyber Assurance, Offensive Adversary Simulation, Vulnerability Management & Cyber Strategy. Penetration Tester → Team Lead → Function Senior Manager → Head of Cyber Security / Deputy CISO.
-      </p>
-      <p class="about-text">
-        Security programme builder, implementer and executionist with deep technical foundations shaped across dozens of industries, technology stacks, and organisational models. I think in programmes, not projects, designing capabilities that embed into engineering culture and mature over time.
-      </p>
-      <p class="about-text">
-        I design threat informed Offensive Security Strategies focused on realistic threat
-        simulation, measurable risk, and building things that actually work in the field.
-      </p>
+      <p class="about-lead">{ABOUT.lead}</p>
+      {ABOUT.paragraphs.map(p => <p class="about-text">{p}</p>)}
 
       <div class="skills-section">
         <p class="skills-label">expertise</p>
         <div class="skill-list">
-          <div class="skill-item">Offensive adversary simulation</div>
-          <div class="skill-item">Threat Intelligence</div>
-          <div class="skill-item">Continuous Adversary Simulation (CT-ASF)</div>
-          <div class="skill-item">FAIR / Monte Carlo risk modelling</div>
-          <div class="skill-item">ATT&amp;CK TTP mapping</div>
-          <div class="skill-item">Threat modelling (STRIDE, PASTA)</div>
+          {ABOUT.expertise.map(skill => <div class="skill-item">{skill}</div>)}
         </div>
       </div>
     </div>

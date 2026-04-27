@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { SITE, ABOUT, CONTACT } from '../config/site.ts';
 
 const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 const TERMINAL_POSTS = allPosts
@@ -24,6 +25,8 @@ const TERMINAL_PROJECTS = allProjects
     description: project.data.description,
     tags: project.data.tags,
   }));
+
+const SITE_CONFIG = { site: SITE, about: ABOUT, contact: CONTACT };
 ---
 
 <!DOCTYPE html>
@@ -207,7 +210,7 @@ const TERMINAL_PROJECTS = allProjects
   </div>
 </div>
 
-<script is:inline define:vars={{ TERMINAL_POSTS, TERMINAL_PROJECTS }}>
+<script is:inline define:vars={{ TERMINAL_POSTS, TERMINAL_PROJECTS, SITE_CONFIG }}>
 /* ── DOM ── */
 const outputArea   = document.getElementById('outputArea');
 const inputRow     = document.getElementById('inputRow');
@@ -490,21 +493,21 @@ var ALL_CMDS = ['help','banner','about','projects','blog','read','open','contact
 /* ── CONTENT DISPLAY HELPERS ── */
 function showAbout() {
   setDir('~/about');
-  printLines([
-    { text: 'HANDLE:    0x42sec',                                              cls: 'bright' },
-    { text: 'ROLE:      Security Researcher & Red Team Operator',              cls: '' },
-    { text: 'SITE:      0x42sec.io \u2014 research lab & personal ops',       cls: '' },
+  var a = SITE_CONFIG.about;
+  var lines = [
+    { text: 'HANDLE:    ' + a.handle, cls: 'bright' },
+    { text: 'ROLE:      ' + a.role,   cls: '' },
+    { text: 'SITE:      ' + a.site,   cls: '' },
     { text: '', cls: '' },
     { text: 'EXPERTISE:', cls: 'amber' },
-    { text: '  \u251c\u2500 Offensive adversary simulation & continuous red team',   cls: '' },
-    { text: '  \u251c\u2500 Maritime & SATCOM security (AIS, NMEA, VSAT, Iridium)', cls: '' },
-    { text: '  \u251c\u2500 Passive RF / SIGINT \u2014 SDR, GNU Radio, DroneID',     cls: '' },
-    { text: '  \u251c\u2500 FAIR / Monte Carlo quantitative risk modelling',          cls: '' },
-    { text: '  \u251c\u2500 Threat modelling: STRIDE, PASTA, LINDDUN, Attack Trees', cls: '' },
-    { text: '  \u2514\u2500 CREST CPTIA / ATT&CK TTP mapping',                      cls: '' },
-    { text: '', cls: '' },
-    { text: 'Currently building this terminal.', cls: 'dim' },
-  ]);
+  ];
+  a.expertise.forEach(function(e, i) {
+    var prefix = i === a.expertise.length - 1 ? '  \u2514\u2500 ' : '  \u251c\u2500 ';
+    lines.push({ text: prefix + e, cls: '' });
+  });
+  lines.push({ text: '', cls: '' });
+  lines.push({ text: a.terminalFooter, cls: 'dim' });
+  printLines(lines);
 }
 
 function showProjects() {
@@ -544,16 +547,17 @@ function showBlog() {
 
 function showContact() {
   setDir('~/contact');
-  printLines([
+  var c = SITE_CONFIG.contact;
+  var lines = [
     { text: 'CONTACT CHANNELS', cls: 'amber' },
     { text: '', cls: '' },
-    { text: 'EMAIL    0x42sec@0x42sec.io',           cls: 'bright' },
-    { text: 'GITHUB   github.com/0x42sec',            cls: '' },
-    { text: 'LINKEDIN linkedin.com/in/0x42sec',       cls: '' },
-    { text: 'PGP      Available on request',          cls: 'dim'   },
-    { text: '', cls: '' },
-    { text: 'Encrypted communications preferred.',    cls: 'dim'   },
-  ]);
+  ];
+  c.channels.forEach(function(ch) {
+    lines.push({ text: ch.label.padEnd(8) + ' ' + ch.value, cls: 'bright' });
+  });
+  lines.push({ text: '', cls: '' });
+  if (c.note) lines.push({ text: c.note, cls: 'dim' });
+  printLines(lines);
 }
 
 function process(raw) {
@@ -757,7 +761,7 @@ function boot() {
     { text: '', cls: '' },
     { text: ASCII, cls: 'ascii' },
     { text: '', cls: '' },
-    { text: '[ security research // red team // rf+sigint // personal ops ]', cls: 'bright' },
+    { text: '[ ' + SITE_CONFIG.site.tagline + ' ]', cls: 'bright' },
     { text: 'System ready. Operator authenticated.',     cls: 'dim'   },
     { text: '', cls: '' },
     { text: 'Type "help" for available commands.',       cls: 'amber' },
