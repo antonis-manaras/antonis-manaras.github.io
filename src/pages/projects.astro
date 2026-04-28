@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import ProjectCard from '../components/ProjectCard.astro';
 import { getCollection } from 'astro:content';
 
 const allProjects = await getCollection('projects', ({ data }) => !data.draft);
@@ -15,25 +16,20 @@ const projects = allProjects.sort((a, b) => b.data.date.getTime() - a.data.date.
 
     <hr class="section-divider">
 
-    <div style="padding-top: 48px;">
+    <div style="padding-top: 8px;">
       {projects.length === 0 ? (
         <p class="about-lead" style="color: var(--text-dim);">WIP — projects to be added soon.</p>
       ) : (
         <div class="blog-list">
           {projects.map(project => (
-            <div class="blog-card">
-              <div class="blog-card-meta">
-                <span class="blog-card-date">{project.data.date.toISOString().split('T')[0]}</span>
-                <span class="blog-card-reading-time" style="color: var(--phosphor-amber);">[{project.data.status}]</span>
-              </div>
-              <h2 class="blog-card-title">{project.data.title}</h2>
-              <p class="blog-card-description">{project.data.description}</p>
-              <div class="blog-card-tags">
-                {project.data.tags.map(tag => (
-                  <span class="blog-tag">{tag}</span>
-                ))}
-              </div>
-            </div>
+            <ProjectCard
+              slug={project.slug}
+              title={project.data.title}
+              date={project.data.date}
+              status={project.data.status}
+              tags={project.data.tags}
+              description={project.data.description}
+            />
           ))}
         </div>
       )}

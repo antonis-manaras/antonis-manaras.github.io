@@ -1,6 +1,7 @@
 ---
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import TagSidebar from '../components/TagSidebar.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -29,9 +30,12 @@ const {
 </head>
 <body>
   <Nav />
-  <main>
-    <slot />
-  </main>
+  <div class="site-shell">
+    <main class="site-main">
+      <slot />
+    </main>
+    <TagSidebar />
+  </div>
   <Footer />
 </body>
 </html>

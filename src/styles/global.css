@@ -87,11 +87,103 @@ a:hover { opacity: 0.7; }
   opacity: 1 !important;
 }
 
+/* ── SITE SHELL ── */
+.site-shell {
+  display: flex;
+  align-items: start;
+  gap: 48px;
+  max-width: calc(var(--max-width) + 48px + 200px + 96px);
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+.site-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── TAG SIDEBAR ── */
+.tag-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 72px;
+  padding-top: 72px;
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.tag-sidebar::-webkit-scrollbar { display: none; }
+
+.tag-sidebar-heading {
+  font-family: 'VT323', monospace;
+  font-size: 12px;
+  color: var(--phosphor);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-bottom: 14px;
+}
+.tag-sidebar-heading::before { content: '> '; }
+
+.tag-sidebar-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tag-sidebar-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.tag-sidebar-item:hover {
+  background: rgba(57,255,20,0.05);
+  color: var(--text);
+  border-color: var(--border);
+  opacity: 1;
+}
+.tag-sidebar-item.active {
+  background: rgba(57,255,20,0.08);
+  color: var(--phosphor-bright);
+  border-color: rgba(57,255,20,0.28);
+  opacity: 1;
+}
+
+.tag-sidebar-name {
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.3px;
+}
+
+.tag-sidebar-count {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: var(--phosphor-dim);
+  min-width: 18px;
+  text-align: right;
+}
+
 /* ── PAGE STRUCTURE ── */
 .page-wrapper {
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 48px;
+}
+
+/* Within the shell, padding is handled by site-shell */
+.site-main .page-wrapper {
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .page-header {
@@ -476,6 +568,12 @@ a:hover { opacity: 0.7; }
 }
 
 /* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .tag-sidebar { display: none; }
+  .site-shell { padding: 0; gap: 0; }
+  .site-main .page-wrapper { padding-left: 20px; padding-right: 20px; }
+}
+
 @media (max-width: 768px) {
   .site-nav { padding: 16px 20px; }
   .nav-links li:not(:last-child) { display: none; }

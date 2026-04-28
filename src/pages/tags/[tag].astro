@@ -1,0 +1,100 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+
+export async function getStaticPaths() {
+  const allPosts    = await getCollection('blog',     ({ data }) => !data.draft);
+  const allProjects = await getCollection('projects', ({ data }) => !data.draft);
+
+  const tagSet = new Set<string>();
+  for (const item of [...allPosts, ...allProjects]) {
+    for (const tag of item.data.tags) tagSet.add(tag);
+  }
+
+  return Array.from(tagSet).map(tag => ({
+    params: { tag },
+    props: {
+      posts:    allPosts.filter(p => p.data.tags.includes(tag))
+                        .sort((a, b) => b.data.date.getTime() - a.data.date.getTime()),
+      projects: allProjects.filter(p => p.data.tags.includes(tag))
+                           .sort((a, b) => b.data.date.getTime() - a.data.date.getTime()),
+    },
+  }));
+}
+
+function getReadingTime(content: string): string {
+  const words = content.trim().split(/\s+/).length;
+  const minutes = Math.ceil(words / 200);
+  return minutes === 1 ? '1 min read' : `${minutes} min read`;
+}
+
+const { tag } = Astro.params;
+const { posts, projects } = Astro.props;
+const total = posts.length + projects.length;
+---
+
+<Base title={`#${tag}`} description={`All posts and projects tagged "${tag}" on 0x42sec.`}>
+  <div class="page-wrapper">
+    <header class="page-header">
+      <p class="page-eyebrow">tag</p>
+      <h1 class="page-title">#{tag}</h1>
+      <p style="margin-top: 12px; font-size: 13px; color: var(--text-dim); letter-spacing: 1px;">
+        {total} {total === 1 ? 'result' : 'results'}
+      </p>
+    </header>
+
+    <hr class="section-divider">
+
+    {posts.length > 0 && (
+      <section style="padding-top: 8px;">
+        <p class="tag-section-label">blog posts</p>
+        <div class="blog-list">
+          {posts.map(post => (
+            <BlogCard
+              slug={post.slug}
+              title={post.data.title}
+              date={post.data.date}
+              tags={post.data.tags}
+              description={post.data.description}
+              readingTime={getReadingTime(post.body)}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+
+    {projects.length > 0 && (
+      <section style={posts.length > 0 ? 'padding-top: 40px;' : 'padding-top: 8px;'}>
+        <p class="tag-section-label">projects</p>
+        <div class="blog-list">
+          {projects.map(project => (
+            <ProjectCard
+              slug={project.slug}
+              title={project.data.title}
+              date={project.data.date}
+              status={project.data.status}
+              tags={project.data.tags}
+              description={project.data.description}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+</Base>
+
+<style>
+  .tag-section-label {
+    font-family: 'VT323', monospace;
+    font-size: 12px;
+    color: var(--phosphor);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-bottom: 0;
+    padding: 16px 0 0;
+  }
+  .tag-section-label::before { content: '> '; }
+</style>

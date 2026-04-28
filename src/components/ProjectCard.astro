@@ -1,0 +1,36 @@
+---
+interface Props {
+  slug: string;
+  title: string;
+  date: Date;
+  status: string;
+  tags: string[];
+  description: string;
+}
+
+const { slug, title, date, status, tags, description } = Astro.props;
+
+const formattedDate = date.toLocaleDateString('en-GB', {
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+});
+---
+
+<article class="blog-card">
+  <div class="blog-card-meta">
+    <time datetime={date.toISOString()}>{formattedDate}</time>
+    <span class="sep">·</span>
+    <span style="color: var(--phosphor-amber);">[{status}]</span>
+  </div>
+  <h2 class="blog-card-title">
+    <a href={`/projects/${slug}`}>{title}</a>
+  </h2>
+  <p class="blog-card-desc">{description}</p>
+  <div class="blog-card-footer">
+    <div class="tags">
+      {tags.map(tag => <span class="tag">{tag}</span>)}
+    </div>
+    <a href={`/projects/${slug}`} class="read-more">read more →</a>
+  </div>
+</article>

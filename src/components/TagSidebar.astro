@@ -1,0 +1,37 @@
+---
+import { getCollection } from 'astro:content';
+
+const allPosts    = await getCollection('blog',     ({ data }) => !data.draft);
+const allProjects = await getCollection('projects', ({ data }) => !data.draft);
+
+const tagCounts: Record<string, number> = {};
+for (const item of [...allPosts, ...allProjects]) {
+  for (const tag of item.data.tags) {
+    tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+  }
+}
+
+const tags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+const currentPath = Astro.url.pathname;
+const activeTag = currentPath.startsWith('/tags/')
+  ? decodeURIComponent(currentPath.replace(/^\/tags\//, '').replace(/\/$/, ''))
+  : null;
+---
+
+<aside class="tag-sidebar">
+  <p class="tag-sidebar-heading">tags</p>
+  <ul class="tag-sidebar-list">
+    {tags.map(([tag, count]) => (
+      <li>
+        <a
+          href={`/tags/${encodeURIComponent(tag)}`}
+          class:list={['tag-sidebar-item', { active: tag === activeTag }]}
+        >
+          <span class="tag-sidebar-name">{tag}</span>
+          <span class="tag-sidebar-count">{count}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</aside>

@@ -103,7 +103,7 @@ const SITE_CONFIG = { site: SITE, about: ABOUT, contact: CONTACT };
 
     .output-area { display: block; }
 
-    .output-line { display: block; animation: flicker-in 0.04s ease both; }
+    .output-line { display: block; white-space: pre; animation: flicker-in 0.04s ease both; }
     @keyframes flicker-in { 0% { opacity: 0 } 60% { opacity: 1 } 70% { opacity: 0.7 } 100% { opacity: 1 } }
     .output-line.dim    { color: var(--phosphor-dim); }
     .output-line.bright { color: var(--phosphor-bright); }
@@ -259,7 +259,7 @@ function buildFS() {
 const printQ = [];
 let draining = false;
 
-function addLine(text, cls) {
+function addLine(text, cls, html) {
   const el = document.createElement('span');
   el.className = 'output-line' + (cls ? ' ' + cls : '');
   if (!text && text !== 0) {
@@ -270,6 +270,8 @@ function addLine(text, cls) {
     pre.className = 'ascii-art';
     pre.textContent = text;
     el.appendChild(pre);
+  } else if (html) {
+    el.innerHTML = text;
   } else {
     el.textContent = text;
   }
@@ -351,7 +353,7 @@ function renderPager() {
 
   // Render content lines for this page
   for (var i = 0; i < slice.length; i++) {
-    addLine(slice[i].text, slice[i].cls);
+    addLine(slice[i].text, slice[i].cls, slice[i].html);
   }
 
   // Fill remaining space with ~ (like less/vim)
@@ -413,6 +415,22 @@ function stripInline(t) {
     .replace(/<[^>]+>/g, '');
 }
 
+function inlineMarkup(t) {
+  t = t.replace(/!\[.*?\]\(.*?\)/g, '[image]');
+  t = t.replace(/\[(.+?)\]\(.+?\)/g, '$1');
+  t = t.replace(/<[^>]+>/g, '');
+  t = t.replace(/~~(.+?)~~/g, '$1');
+  t = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  t = t.replace(/\*\*\*(.+?)\*\*\*/g, '<span style="color:#88ffaa">$1</span>');
+  t = t.replace(/\*\*(.+?)\*\*/g, '<span style="color:#88ffaa">$1</span>');
+  t = t.replace(/___(.+?)___/g, '<span style="color:#88ffaa">$1</span>');
+  t = t.replace(/__(.+?)__/g, '<span style="color:#88ffaa">$1</span>');
+  t = t.replace(/`([^`]+)`/g, '<span style="color:#ffb000">$1</span>');
+  t = t.replace(/\*(.+?)\*/g, '<span style="opacity:0.65">$1</span>');
+  t = t.replace(/_(.+?)_/g, '<span style="opacity:0.65">$1</span>');
+  return t;
+}
+
 function mdToLines(md) {
   var out = [];
   var inCode = false;
@@ -446,15 +464,15 @@ function mdToLines(md) {
     }
 
     if (/^[-*_]{3,}$/.test(raw.trim())) { out.push({ text: '\u2500'.repeat(64), cls: 'dim' }); continue; }
-    if (raw.startsWith('> ')) { out.push({ text: '  \u2502 ' + stripInline(raw.slice(2)), cls: 'dim' }); continue; }
+    if (raw.startsWith('> ')) { out.push({ text: '  \u2502 ' + inlineMarkup(raw.slice(2)), cls: 'dim', html: true }); continue; }
 
     var ul = raw.match(/^(\s*)[-*+] (.+)/);
-    if (ul) { out.push({ text: ul[1] + '  \u00b7 ' + stripInline(ul[2]), cls: '' }); continue; }
+    if (ul) { out.push({ text: ul[1] + '  \u00b7 ' + inlineMarkup(ul[2]), cls: '', html: true }); continue; }
 
     var ol = raw.match(/^(\s*)(\d+)\. (.+)/);
-    if (ol) { out.push({ text: ol[1] + '  ' + ol[2] + '. ' + stripInline(ol[3]), cls: '' }); continue; }
+    if (ol) { out.push({ text: ol[1] + '  ' + ol[2] + '. ' + inlineMarkup(ol[3]), cls: '', html: true }); continue; }
 
-    out.push({ text: stripInline(raw), cls: '' });
+    out.push({ text: inlineMarkup(raw), cls: '', html: true });
   }
   return out;
 }
@@ -754,8 +772,8 @@ function process(raw) {
 
 /* ── BOOT ── */
 function boot() {
-  printLines([
-    { text: 'BIOS v2.14.7 \u2014 Initialising POST...', cls: 'dim' },
+  var base = [
+    { text: 'BIOS v2.14.7 — Initialising POST...', cls: 'dim' },
     { text: 'RAM CHECK: 640K OK',                        cls: 'dim' },
     { text: 'LOADING KERNEL...',                         cls: 'dim' },
     { text: '', cls: '' },
@@ -766,7 +784,32 @@ function boot() {
     { text: '', cls: '' },
     { text: 'Type "help" for available commands.',       cls: 'amber' },
     { text: '', cls: '' },
-  ], 55);
+  ];
+
+  var notice = [];
+  if (TERMINAL_POSTS.length > 0) {
+    var latest = TERMINAL_POSTS[0];
+    var daysSince = (Date.now() - new Date(latest.date).getTime()) / 86400000;
+    if (daysSince <= 7) {
+      var dLabel = daysSince < 1   ? 'today'
+                 : daysSince < 2   ? 'yesterday'
+                 : Math.floor(daysSince) + ' days ago';
+      // All ASCII box chars so every character renders at identical width in VT323.
+      var BW = 62;
+      function boxLine(s) { return '|' + (s + ' '.repeat(BW)).slice(0, BW) + '|'; }
+      var topLabel = '--[ !! NEW POST !! ]--';
+      notice = [
+        { text: '+' + topLabel + '-'.repeat(BW - topLabel.length) + '+', cls: 'dim' },
+        { text: boxLine('  >>  ' + latest.title.slice(0, BW - 6)), cls: 'amber' },
+        { text: boxLine('  ' + latest.date + ' . published ' + dLabel), cls: 'dim' },
+        { text: boxLine('  [*] type "read 1" to read  .  "open 1" for web'), cls: 'dim' },
+        { text: '+' + '-'.repeat(BW) + '+', cls: 'dim' },
+        { text: '', cls: '' },
+      ];
+    }
+  }
+
+  printLines(base.concat(notice), 55);
 }
 
 /* ── INPUT MIRROR ── */
