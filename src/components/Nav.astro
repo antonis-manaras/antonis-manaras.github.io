@@ -17,4 +17,38 @@ function isActive(path: string) {
     <li><a href="/contact" class:list={[{ active: isActive('/contact') }]}>Contact</a></li>
     <li><a href="/" class="nav-terminal">&gt; terminal_</a></li>
   </ul>
+  <button class="nav-hamburger" id="navHamburger" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<div class="nav-mobile-menu" id="navMobileMenu" aria-hidden="true">
+  <ul>
+    <li><a href="/about" class:list={[{ active: isActive('/about') }]}>About</a></li>
+    <li><a href="/blog" class:list={[{ active: isActive('/blog') }]}>Blog</a></li>
+    <li><a href="/projects" class:list={[{ active: isActive('/projects') }]}>Projects</a></li>
+    <li><a href="/contact" class:list={[{ active: isActive('/contact') }]}>Contact</a></li>
+    <li><a href="/" class="nav-terminal-mobile">&gt; terminal_</a></li>
+  </ul>
+</div>
+
+<script>
+  const btn = document.getElementById('navHamburger')!;
+  const menu = document.getElementById('navMobileMenu')!;
+
+  btn.addEventListener('click', () => {
+    const open = menu.classList.toggle('open');
+    btn.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+    menu.setAttribute('aria-hidden', String(!open));
+  });
+
+  menu.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      menu.classList.remove('open');
+      btn.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      menu.setAttribute('aria-hidden', 'true');
+    });
+  });
+</script>

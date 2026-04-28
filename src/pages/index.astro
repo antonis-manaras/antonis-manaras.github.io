@@ -181,7 +181,9 @@ const SITE_CONFIG = { site: SITE, about: ABOUT, contact: CONTACT };
     .pager-status.active { display: block; }
 
     @media (max-width: 640px) {
-      .terminal-inner { font-size: 16px; }
+      .terminal-inner { font-size: 13px; padding: 10px 12px 8px; }
+      .p-user, .p-sep, .p-dir { display: none; }
+      .exit-hint { display: none; }
     }
   </style>
 </head>
@@ -435,15 +437,19 @@ function inlineMarkup(t) {
 var _termCols = 0;
 function getTermCols() {
   if (_termCols) return _termCols;
+  var fs = getComputedStyle(termInner).fontSize || '18px';
+  var pl = parseInt(getComputedStyle(termInner).paddingLeft || '20');
+  var pr = parseInt(getComputedStyle(termInner).paddingRight || '20');
   var probe = document.createElement('span');
-  probe.style.cssText = 'position:absolute;left:-9999px;top:0;white-space:pre;font-family:VT323,monospace;font-size:18px;';
+  probe.style.cssText = 'position:absolute;left:-9999px;top:0;white-space:pre;font-family:VT323,monospace;font-size:' + fs + ';';
   probe.textContent = 'x'.repeat(200);
   document.body.appendChild(probe);
   var cw = probe.getBoundingClientRect().width / 200;
   document.body.removeChild(probe);
-  _termCols = cw > 0 ? Math.max(40, Math.floor((termInner.clientWidth - 40) / cw)) : 80;
+  _termCols = cw > 0 ? Math.max(28, Math.floor((termInner.clientWidth - pl - pr) / cw)) : 60;
   return _termCols;
 }
+window.addEventListener('resize', function() { _termCols = 0; });
 
 function wrapText(text, cols) {
   if (!cols || text.length <= cols) return [text];
@@ -537,6 +543,19 @@ var ASCII = [
   '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500[ 0x42sec ]\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500[ 0x42sec.io ]\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500'
 ].join('\n');
 
+function getBanner(cols) {
+  if (cols >= 70) return ASCII;
+  var w = Math.max(32, cols - 2);
+  var sep = '+' + '-'.repeat(w) + '+';
+  function row(s) { return '|  ' + (s + ' '.repeat(w - 2)).slice(0, w - 2) + '|'; }
+  return [
+    sep,
+    row('0x42sec // 0x42sec.io'),
+    row('security research & personal ops'),
+    sep,
+  ].join('\n');
+}
+
 /* ── COMMANDS ── */
 var ALL_CMDS = ['help','banner','about','projects','blog','read','open','contact','ls','ll','cd','clear','whoami','date','uptime','exit'];
 
@@ -626,7 +645,7 @@ function process(raw) {
 
   switch (cmd) {
     case 'banner':
-      printLine(ASCII, 'ascii');
+      printLine(getBanner(getTermCols()), 'ascii');
       break;
 
     case 'help': {
@@ -805,12 +824,13 @@ function process(raw) {
 
 /* ── BOOT ── */
 function boot() {
+  var cols = getTermCols();
   var base = [
     { text: 'BIOS v2.14.7 — Initialising POST...', cls: 'dim' },
     { text: 'RAM CHECK: 640K OK',                        cls: 'dim' },
     { text: 'LOADING KERNEL...',                         cls: 'dim' },
     { text: '', cls: '' },
-    { text: ASCII, cls: 'ascii' },
+    { text: getBanner(cols), cls: 'ascii' },
     { text: '', cls: '' },
     { text: '[ ' + SITE_CONFIG.site.tagline + ' ]', cls: 'bright' },
     { text: 'System ready. Operator authenticated.',     cls: 'dim'   },
@@ -829,8 +849,7 @@ function boot() {
       var dLabel = daysSince < 1   ? 'today'
                  : daysSince < 2   ? 'yesterday'
                  : Math.floor(daysSince) + ' days ago';
-      // All ASCII box chars so every character renders at identical width in VT323.
-      var BW = 62;
+      var BW = Math.min(62, cols - 2);
       function boxLine(s) { return '|' + (s + ' '.repeat(BW)).slice(0, BW) + '|'; }
       var topLabel = '--[ !! NEW POST !! ]--';
       notice = [
