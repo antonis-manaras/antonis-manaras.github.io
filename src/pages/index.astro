@@ -431,7 +431,34 @@ function inlineMarkup(t) {
   return t;
 }
 
-function mdToLines(md) {
+/* ── TERM WIDTH ── */
+var _termCols = 0;
+function getTermCols() {
+  if (_termCols) return _termCols;
+  var probe = document.createElement('span');
+  probe.style.cssText = 'position:absolute;left:-9999px;top:0;white-space:pre;font-family:VT323,monospace;font-size:18px;';
+  probe.textContent = 'x'.repeat(200);
+  document.body.appendChild(probe);
+  var cw = probe.getBoundingClientRect().width / 200;
+  document.body.removeChild(probe);
+  _termCols = cw > 0 ? Math.max(40, Math.floor((termInner.clientWidth - 40) / cw)) : 80;
+  return _termCols;
+}
+
+function wrapText(text, cols) {
+  if (!cols || text.length <= cols) return [text];
+  var out = [];
+  while (text.length > cols) {
+    var cut = text.lastIndexOf(' ', cols);
+    if (cut < 1) cut = cols;
+    out.push(text.slice(0, cut));
+    text = text.slice(cut).replace(/^ /, '');
+  }
+  if (text) out.push(text);
+  return out;
+}
+
+function mdToLines(md, cols) {
   var out = [];
   var inCode = false;
   var codeBuf = [];
@@ -470,9 +497,15 @@ function mdToLines(md) {
     if (ul) { out.push({ text: ul[1] + '  \u00b7 ' + inlineMarkup(ul[2]), cls: '', html: true }); continue; }
 
     var ol = raw.match(/^(\s*)(\d+)\. (.+)/);
-    if (ol) { out.push({ text: ol[1] + '  ' + ol[2] + '. ' + inlineMarkup(ol[3]), cls: '', html: true }); continue; }
+    if (ol) {
+      var olPfx = ol[1] + '  ' + ol[2] + '. ';
+      var olSegs = wrapText(ol[3], cols ? cols - olPfx.length : 9999);
+      for (var oi = 0; oi < olSegs.length; oi++) out.push({ text: (oi === 0 ? olPfx : ' '.repeat(olPfx.length)) + inlineMarkup(olSegs[oi]), cls: '', html: true });
+      continue;
+    }
 
-    out.push({ text: inlineMarkup(raw), cls: '', html: true });
+    var pSegs = wrapText(raw, cols || 9999);
+    for (var pi = 0; pi < pSegs.length; pi++) out.push({ text: inlineMarkup(pSegs[pi]), cls: '', html: true });
   }
   return out;
 }
@@ -666,7 +699,7 @@ function process(raw) {
         { text: '\u2550'.repeat(Math.min(post.title.length, 64)), cls: 'dim' },
         { text: 'Published: ' + post.date + '  \u00b7  Tags: ' + post.tags.join(' \u00b7 '), cls: 'dim' },
         { text: '', cls: '' },
-      ].concat(mdToLines(post.body)).concat([
+      ].concat(mdToLines(post.body, getTermCols())).concat([
         { text: '', cls: '' },
         { text: '\u2500'.repeat(64), cls: 'dim' },
         { text: 'w: open in browser  \u00b7  q: close pager', cls: 'dim' },
