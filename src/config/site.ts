@@ -19,7 +19,7 @@ export const ABOUT = {
 
   // Additional body paragraphs on the web About page
   paragraphs: [
-    'Security programme builder, implementer and executionist with deep technical foundations shaped across dozens of industries, technology stacks, and organisational models. I think in programmes, not projects, designing capabilities that embed into engineering culture and mature over time.',
+    'Security programme builder, implementer and leader with deep technical foundations shaped across dozens of industries, technology stacks, and organisational models. I think in programmes, not projects, designing capabilities that embed into engineering culture and mature over time.',
     'I design threat informed Offensive Security Strategies focused on realistic threat simulation, measurable risk, and building things that actually work in the field.',
   ],
 

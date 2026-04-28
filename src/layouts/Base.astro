@@ -31,11 +31,13 @@ const {
 <body>
   <Nav />
   <div class="site-shell">
-    <main class="site-main">
-      <slot />
-    </main>
+    <div class="site-content">
+      <main class="site-main">
+        <slot />
+      </main>
+      <Footer />
+    </div>
     <TagSidebar />
   </div>
-  <Footer />
 </body>
 </html>

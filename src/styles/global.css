@@ -51,7 +51,17 @@ a:hover { opacity: 0.7; }
   text-shadow: 0 0 10px rgba(57,255,20,0.35);
   text-decoration: none;
 }
-.nav-logo:hover { opacity: 1; }
+.nav-logo {
+  transition: text-shadow 0.2s ease, color 0.2s ease;
+}
+.nav-logo:hover {
+  color: #88ffaa;
+  text-shadow:
+    0 0 6px #39FF14,
+    0 0 14px #39FF14,
+    0 0 32px rgba(57,255,20,0.7),
+    0 0 60px rgba(57,255,20,0.35);
+}
 
 .nav-links {
   display: flex;
@@ -95,6 +105,13 @@ a:hover { opacity: 0.7; }
   max-width: calc(var(--max-width) + 48px + 200px + 96px);
   margin: 0 auto;
   padding: 0 48px;
+}
+
+.site-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .site-main {
@@ -424,9 +441,7 @@ a:hover { opacity: 0.7; }
 /* ── FOOTER ── */
 .site-footer {
   border-top: 1px solid var(--border);
-  padding: 32px 48px;
-  max-width: var(--max-width);
-  margin: 0 auto;
+  padding: 32px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -581,5 +596,5 @@ a:hover { opacity: 0.7; }
   .page-header { padding: 48px 0 32px; }
   .page-title { font-size: 32px; }
   .post-title { font-size: 24px; }
-  .site-footer { padding: 24px 20px; }
+  .site-footer { padding: 24px 0; }
 }
