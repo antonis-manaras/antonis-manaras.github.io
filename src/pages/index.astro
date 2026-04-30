@@ -180,10 +180,33 @@ const SITE_CONFIG = { site: SITE, about: ABOUT, contact: CONTACT };
     }
     .pager-status.active { display: block; }
 
+    .mobile-web-btn {
+      display: none;
+      position: absolute;
+      bottom: 12px;
+      right: 16px;
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      letter-spacing: 2px;
+      color: rgba(57,255,20,0.5);
+      border: 1px solid rgba(57,255,20,0.25);
+      padding: 5px 14px;
+      border-radius: 2px;
+      text-decoration: none;
+      z-index: 10;
+      background: rgba(1,10,1,0.7);
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .mobile-web-btn:active {
+      color: var(--phosphor);
+      border-color: var(--phosphor);
+    }
+
     @media (max-width: 640px) {
       .terminal-inner { font-size: 13px; padding: 10px 12px 8px; }
       .p-user, .p-sep, .p-dir { display: none; }
       .exit-hint { display: none; }
+      .mobile-web-btn { display: block; }
     }
   </style>
 </head>
@@ -209,6 +232,7 @@ const SITE_CONFIG = { site: SITE, about: ABOUT, contact: CONTACT };
       <div id="pagerStatus" class="pager-status"></div>
     </div>
     <div class="exit-hint">TYPE help FOR COMMANDS &nbsp;|&nbsp; TYPE exit FOR WEBSITE</div>
+    <a href="/blog" class="mobile-web-btn" id="mobileWebBtn">web →</a>
   </div>
 </div>
 
@@ -921,9 +945,76 @@ document.addEventListener('keydown', function() {
 
 /* ── INIT ── */
 window.addEventListener('load', function() {
+  var isMobile = (window.innerWidth <= 768) && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
+  var intentional = new URLSearchParams(location.search).get('from') === 'nav';
+
+  if (isMobile && !intentional) {
+    var mobileLines = [
+      { text: 'BIOS v2.14.7 — running pre-boot diagnostics...', cls: 'dim' },
+      { text: '', cls: '' },
+      { text: '  [ OK ] touch input detected', cls: 'dim' },
+      { text: '  [FAIL] mechanical keyboard: not found', cls: 'error' },
+      { text: '  [FAIL] vim keybindings: not found', cls: 'error' },
+      { text: '  [FAIL] hacker credentials: insufficient', cls: 'error' },
+      { text: '  [ OK ] cope.exe: loaded successfully', cls: 'dim' },
+      { text: '', cls: '' },
+      { text: 'WARNING: terminal not suitable for fingers.', cls: 'amber' },
+      { text: 'loading rounded corners and big buttons...', cls: 'dim' },
+    ];
+    var mobilePrintDelay = 80;
+    // total time = sum of (i * delay) for i=0..n-1 = delay * n*(n-1)/2
+    var mobilePrintDone = mobilePrintDelay * mobileLines.length * (mobileLines.length - 1) / 2;
+    printLines(mobileLines, mobilePrintDelay);
+
+    setTimeout(function() {
+      // hide the prompt so button is the last visible element
+      inputRow.style.display = 'none';
+
+      // blank line before countdown
+      addLine('', '');
+
+      // live countdown line
+      var cntEl = document.createElement('div');
+      cntEl.className = 'output-line dim';
+      outputArea.appendChild(cntEl);
+
+      // go-now tap target
+      var goEl = document.createElement('div');
+      goEl.className = 'output-line';
+      goEl.style.marginTop = '12px';
+      goEl.innerHTML = '<a href="/blog" id="mobileGoNow" style="color:var(--phosphor-amber);text-decoration:none;cursor:pointer;border:1px solid rgba(255,176,0,0.35);padding:6px 16px;letter-spacing:2px;display:inline-block;">[ >> jack in to web interface ]</a>';
+      outputArea.appendChild(goEl);
+
+      termInner.scrollTop = termInner.scrollHeight;
+
+      var secs = 10;
+      function tick() {
+        cntEl.textContent = '> auto-redirect in T-[' + ('0' + secs).slice(-2) + ']...';
+      }
+      tick();
+
+      var timer = setInterval(function() {
+        secs--;
+        tick();
+        termInner.scrollTop = termInner.scrollHeight;
+        if (secs <= 0) {
+          clearInterval(timer);
+          window.location.href = '/blog';
+        }
+      }, 1000);
+
+      var goBtn = document.getElementById('mobileGoNow');
+      if (goBtn) goBtn.addEventListener('click', function() { clearInterval(timer); });
+    }, mobilePrintDone + 400);
+
+    return;
+  }
+
   buildFS();
   boot();
-  setTimeout(function() { termInput.focus(); }, 2000);
+  if (!isMobile) {
+    setTimeout(function() { termInput.focus(); }, 2000);
+  }
 });
 </script>
 
